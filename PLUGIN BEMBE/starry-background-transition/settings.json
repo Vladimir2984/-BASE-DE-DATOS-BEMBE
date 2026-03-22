@@ -1,0 +1,17 @@
+{
+  "projectName": "starry-background-transition",
+  "version": "1.0.0",
+  "debug": true,
+  "api": {
+    "url": "https://bembespb.ru",
+    "port": 443
+  },
+  "wordpress": {
+    "shortcodes": {
+      "salsa_image": {
+        "default_src": "https://bembespb.ru/wp-content/uploads/2026/03/DDD54.png",
+        "alt_text": "Clases de salsa y bachata"
+      }
+    }
+  }
+}

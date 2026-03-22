@@ -1,0 +1,1 @@
+return this.db.query.agents.findFirst({ where: eq(agents.id, id) });

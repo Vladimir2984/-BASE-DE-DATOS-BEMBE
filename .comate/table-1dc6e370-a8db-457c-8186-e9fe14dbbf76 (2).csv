@@ -1,0 +1,3 @@
+﻿Concepto,Archivo/Ubicación,Propósito
+Custom Agent (Zulu),"UI de Comate → ""Crear Agent""",Definir comportamiento con instrucciones/prompt
+MCP Server,.comate/mcp.json,Conectar herramientas externas que Zulu puede invocar

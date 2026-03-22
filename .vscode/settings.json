@@ -1,0 +1,17 @@
+{
+    "baidu.comate.superCompletion": {
+        "superCompletion": true,
+        "autoImport": true
+    },
+    "baidu.comate.displayLanguage": "en",
+    "baidu.comate.useImageDiff": true,
+    "baidu.comate.username": "Iyamir",
+    "baidu.comate.disabledLanguage": [
+        "python",
+        "javascript",
+        "yaml"
+    ],
+    "baidu.comate.enableMcpAutoExecution": true,
+    "baidu.comate.enableTerminalAutoExecution": true,
+    "baidu.comate.enableProxyCompatible": true
+}

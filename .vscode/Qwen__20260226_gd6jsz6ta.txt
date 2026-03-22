@@ -1,0 +1,4 @@
+~/.comate/mcp.json                    # Global (todas las workspaces)
+<workspace>/.comate/mcp.json         # Proyecto (recomendado)
+<workspace>/.comate/mcp.local.json   # Local experimental
+# Prioridad: local > project > global

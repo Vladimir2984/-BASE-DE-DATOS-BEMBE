@@ -1,0 +1,16 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
+  "mcpServers": {
+    "drizzle-docs": {
+      "command": "bun",
+      "args": ["run", "mcp:drizzle-docs"],
+      "env": {
+        "DB_DIALECT": "postgresql",
+        "STRICT_MODE": "true"
+      },
+      "cwd": "$COMATE.ENV.WORKSPACE",
+      "timeout": 45,
+      "disabled": false
+    }
+  }
+}

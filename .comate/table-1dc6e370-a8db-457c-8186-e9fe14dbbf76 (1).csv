@@ -1,0 +1,4 @@
+﻿Transporte,Campos requeridos,Ejemplo
+stdio (default),command,"""command"": ""node"""
+sse,"type: ""sse"""", "url,"""url"": ""https://api/sse"""
+streamableHttp,"type: ""streamableHttp"""", "url,"""url"": ""https://api/mcp"""

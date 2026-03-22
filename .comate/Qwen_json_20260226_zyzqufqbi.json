@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "mi-server": {
+      "transportType": "stdio",  // default: stdio
+      "command": "node",
+      "args": ["server.js", "--port", "8080"],
+      "env": { "API_KEY": "xxx" },
+      "cwd": "$COMATE.ENV.WORKSPACE",  // variable especial de Comate
+      "timeout": 60,                   // segundos, default: 30
+      "disabled": false                // para desactivar sin borrar
+    }
+  }
+}
