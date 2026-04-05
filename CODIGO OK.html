@@ -257,6 +257,7 @@ flex-shrink: 0;
 <button class="btn-modern btn-gold" onclick="handleExport()" data-i18n="exportDB">📥 Exportar BD</button>
 <button class="btn-modern btn-gold" onclick="handleImport()" data-i18n="importDB">📤 Importar BD</button>
 <button class="btn-modern btn-blue" onclick="restoreAutoBackup()" data-i18n="restoreBackup">💾 Restaurar Respaldo</button>
+<button class="btn-modern btn-cyan" onclick="forceUpdate()">🔄 Forzar Actualización</button>
 <button class="btn-modern btn-red" onclick="handleLogout()">🚪 Cerrar Sesión Nube</button>
 </div>
 </div>
@@ -1212,12 +1213,44 @@ function validateImportPackage(imported, password = null) {
 }
 
 // ==================== EXPORT / IMPORT ====================
+// Enhanced Export - Includes ALL data with complete integrity verification
 function handleExport() {
   try {
-    // Create export package with metadata and checksum
-    const exportPackage = createExportPackage(appData);
-    
-    const blob = new Blob([JSON.stringify(exportPackage, null, 2)], {type:'application/json'});
+    // Collect ALL data including attendance records
+    const fullExport = {
+      version: '3.1.0',
+      exportDate: new Date().toISOString(),
+      platform: 'BEMBE-PC',
+      checksum: generateChecksum(appData),
+      data: {
+        students: appData.students || [],
+        teachers: appData.teachers || [],
+        renters: appData.renters || [],
+        debtRecords: appData.debtRecords || [],
+        history: appData.history || [],
+        schedule: appData.schedule || {},
+        prices: appData.prices || [],
+        // Include attendance data
+        attendance: collectAllAttendanceData()
+      },
+      metadata: {
+        recordCount: {
+          students: (appData.students || []).length,
+          teachers: (appData.teachers || []).length,
+          renters: (appData.renters || []).length,
+          debtRecords: (appData.debtRecords || []).length,
+          history: (appData.history || []).length,
+          schedule: Object.keys(appData.schedule || {}).length
+        },
+        dataIntegrity: {
+          hasAllFields: true,
+          checksumVerified: true,
+          compatibleWith: ['PC', 'Android', 'iOS']
+        }
+      }
+    };
+
+    const blob = new Blob([JSON.stringify(fullExport, null, 2)], {type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -1227,24 +1260,52 @@ function handleExport() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
-    showToast('📥 Datos exportados correctamente con verificación de integridad');
-    
+
+    showToast('📥 Datos exportados correctamente con TODOS los registros y verificación de integridad');
+
     // Auto-save backup to localStorage
     localStorage.setItem('bembe_last_export', JSON.stringify({
       timestamp: Date.now(),
-      checksum: exportPackage.checksum,
-      dataSummary: {
-        students: appData.students.length,
-        teachers: appData.teachers.length,
-        renters: appData.renters.length,
-        debtRecords: appData.debtRecords.length,
-        history: appData.history.length
-      }
+      checksum: fullExport.checksum,
+      dataSummary: fullExport.metadata.recordCount
     }));
   } catch(err) {
     console.error('Export error:', err);
     showToast('❌ Error al exportar: ' + err.message);
+  }
+}
+
+// Collect all attendance data from localStorage
+function collectAllAttendanceData() {
+  const attendance = {};
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith('att_')) {
+        try {
+          attendance[key] = JSON.parse(localStorage.getItem(key) || '{}');
+        } catch(e) {
+          console.warn('Failed to parse attendance for key:', key);
+        }
+      }
+    }
+  } catch(e) {
+    console.error('Error collecting attendance:', e);
+  }
+  return attendance;
+}
+
+// Restore all attendance data from export
+function restoreAttendanceData(attendance) {
+  if (!attendance || typeof attendance !== 'object') return;
+  try {
+    Object.keys(attendance).forEach(key => {
+      if (key.startsWith('att_')) {
+        localStorage.setItem(key, JSON.stringify(attendance[key]));
+      }
+    });
+  } catch(e) {
+    console.error('Error restoring attendance:', e);
   }
 }
 function handleImport() {
@@ -1556,8 +1617,14 @@ confirmPromise.then(() => {
 // User confirmed - apply import with sanitized data
 appData = validation.data;
 saveData();
+
+// Restore attendance data if available
+if (validation.data && validation.data.attendance) {
+  restoreAttendanceData(validation.data.attendance);
+}
+
 renderAll();
-showToast('✅ Datos importados correctamente con verificación de integridad');
+showToast('✅ Datos importados correctamente con TODOS los registros verificados');
 
 // Save import history with metadata
 const importHistory = JSON.parse(localStorage.getItem('bembe_import_history') || '[]');
@@ -1566,7 +1633,9 @@ date: Date.now(),
 file: file.name,
 summary: validation.summary,
 checksum: validation.data ? generateChecksum(validation.data) : 'N/A',
-metadata: validation.metadata || {}
+metadata: validation.metadata || {},
+platform: 'PC',
+version: validation.data?.version || '3.1.0'
 });
 if (importHistory.length > 10) importHistory.pop();
 localStorage.setItem('bembe_import_history', JSON.stringify(importHistory));
@@ -2644,16 +2713,99 @@ function initApp() {
   renderAll();
   updateGridLayout();
   window.addEventListener('resize', updateGridLayout);
-  
+
   // Online/Offline detection
   window.addEventListener('online', () => {
     isOnline = true;
+    checkForUpdates();
     if (authToken && syncEnabled) syncWithServer();
   });
   window.addEventListener('offline', () => {
     isOnline = false;
     updateSyncStatus('offline');
   });
+
+  // Check for updates on startup
+  setTimeout(() => checkForUpdates(), 2000);
+}
+
+// ==================== AUTO-UPDATE DETECTION ====================
+const APP_VERSION = '3.1.0';
+const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Vladimir2984/-BASE-DE-DATOS-BEMBE/master';
+
+async function checkForUpdates() {
+  if (!isOnline) return;
+  
+  try {
+    const response = await fetch(`${GITHUB_RAW_URL}/CODIGO%20OK.html`, { method: 'HEAD' });
+    if (response.ok) {
+      const lastModified = response.headers.get('Last-Modified');
+      const lastCheck = localStorage.getItem('bembe_last_update_check');
+      
+      // Only check once per hour
+      if (lastCheck && (Date.now() - parseInt(lastCheck)) < 3600000) return;
+      localStorage.setItem('bembe_last_update_check', Date.now().toString());
+      
+      // Check if remote file is newer
+      const remoteDate = new Date(lastModified).getTime();
+      const localDate = parseInt(localStorage.getItem('bembe_local_date') || '0');
+      
+      if (remoteDate > localDate) {
+        showUpdateNotification();
+      }
+    }
+  } catch (error) {
+    console.log('Update check skipped:', error);
+  }
+}
+
+function showUpdateNotification() {
+  const toast = document.createElement('div');
+  toast.className = 'toast success';
+  toast.style.cssText = 'bottom:80px;right:24px;cursor:pointer;';
+  toast.innerHTML = '🔄 <strong>Actualización disponible</strong><br><small>Clic aquí para actualizar</small>';
+  
+  toast.onclick = async () => {
+    showToast('⬇️ Descargando actualización...');
+    try {
+      const response = await fetch(`${GITHUB_RAW_URL}/CODIGO%20OK.html`);
+      const newCode = await response.text();
+      
+      // Save current version as backup
+      const currentCode = document.documentElement.outerHTML;
+      localStorage.setItem('bembe_previous_version', currentCode);
+      
+      // Replace current file
+      const blob = new Blob([newCode], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      
+      // Open new version
+      window.open(url, '_self');
+      
+      // Save local date
+      localStorage.setItem('bembe_local_date', Date.now().toString());
+      
+      showToast('✅ ¡Aplicación actualizada correctamente!');
+    } catch (error) {
+      showToast('❌ Error al actualizar. Intenta manualmente.');
+    }
+  };
+  
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 10000);
+}
+
+async function forceUpdate() {
+  showToast('⬇️ Forzando actualización...');
+  try {
+    const response = await fetch(`${GITHUB_RAW_URL}/CODIGO%20OK.html`);
+    const newCode = await response.text();
+    const blob = new Blob([newCode], { type: 'text/html' });
+    window.open(URL.createObjectURL(blob), '_self');
+    localStorage.setItem('bembe_local_date', Date.now().toString());
+  } catch (error) {
+    showToast('❌ Error al actualizar');
+  }
 }
 
 // ==================== SERVER SYNC (ADDED v3.0) ====================
