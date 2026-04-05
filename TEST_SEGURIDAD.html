@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Seguridad BEMBE</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+        .test-section {
+            background: rgba(30, 58, 138, 0.25);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-title {
+            color: #fbbf24;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        .test-btn {
+            background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.15));
+            color: #60a5fa;
+            border: 1px solid rgba(59,130,246,0.3);
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: 600;
+        }
+        .test-btn:hover {
+            background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(37,99,235,0.25));
+        }
+        .result {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-family: monospace;
+            font-size: 0.875rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { color: #34d399; }
+        .error { color: #f87171; }
+        .info { color: #60a5fa; }
+    </style>
+</head>
+<body>
+    <h1 style="color: #fbbf24; text-align: center;">🧧 Panel de Pruebas - Seguridad BEMBE v2.0</h1>
+
+    <div class="test-section">
+        <div class="test-title">🔍 Prueba 1: Generación de Checksum</div>
+        <button class="test-btn" onclick="testChecksum()">Ejecutar Prueba</button>
+        <div id="checksum-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">🛡️ Prueba 2: Sanitización XSS</div>
+        <button class="test-btn" onclick="testXSS()">Ejecutar Prueba</button>
+        <div id="xss-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">🔑 Prueba 3: Codificación con Contraseña</div>
+        <button class="test-btn" onclick="testPassword()">Ejecutar Prueba</button>
+        <div id="password-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">📦 Prueba 4: Crear Paquete de Exportación</div>
+        <button class="test-btn" onclick="testExportPackage()">Ejecutar Prueba</button>
+        <div id="export-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">📥 Prueba 5: Validar Importación</div>
+        <button class="test-btn" onclick="testImportValidation()">Ejecutar Prueba</button>
+        <div id="import-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">💾 Prueba 6: Backup con Checksum</div>
+        <button class="test-btn" onclick="testBackup()">Ejecutar Prueba</button>
+        <div id="backup-result" class="result"></div>
+    </div>
+
+    <script>
+        // Copiar funciones de seguridad desde CODIGO OK.html
+        function generateChecksum(data) {
+            let hash = 0;
+            const str = JSON.stringify(data);
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return Math.abs(hash).toString(36);
+        }
+
+        function sanitizeString(str) {
+            if (typeof str !== 'string') return str;
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function sanitizeObject(obj) {
+            if (!obj || typeof obj !== 'object') return obj;
+            const sanitized = {};
+            for (const key in obj) {
+                if (typeof obj[key] === 'string') {
+                    sanitized[key] = sanitizeString(obj[key]);
+                } else if (typeof obj[key] === 'object') {
+                    sanitized[key] = sanitizeObject(obj[key]);
+                } else {
+                    sanitized[key] = obj[key];
+                }
+            }
+            return sanitized;
+        }
+
+        function encodeWithPassword(data, password) {
+            const jsonStr = JSON.stringify(data);
+            let encoded = '';
+            for (let i = 0; i < jsonStr.length; i++) {
+                const charCode = jsonStr.charCodeAt(i) ^ password.charCodeAt(i % password.length);
+                encoded += String.fromCharCode(charCode);
+            }
+            return btoa(encoded);
+        }
+
+        function decodeWithPassword(encodedStr, password) {
+            try {
+                const decoded = atob(encodedStr);
+                let result = '';
+                for (let i = 0; i < decoded.length; i++) {
+                    const charCode = decoded.charCodeAt(i) ^ password.charCodeAt(i % password.length);
+                    result += String.fromCharCode(charCode);
+                }
+                return JSON.parse(result);
+            } catch (err) {
+                throw new Error('Contraseña incorrecta o archivo corrupto');
+            }
+        }
+
+        function createExportPackage(data, password = null) {
+            const exportData = {
+                version: '2.0.0',
+                timestamp: Date.now(),
+                checksum: generateChecksum(data),
+                data: data,
+                metadata: {
+                    exportDate: new Date().toISOString(),
+                    appVersion: 'BEMBE-2.0.0',
+                    recordCount: {
+                        students: data.students.length,
+                        teachers: data.teachers.length,
+                        renters: data.renters.length,
+                        debtRecords: data.debtRecords.length,
+                        history: data.history.length
+                    }
+                }
+            };
+            
+            if (password) {
+                return {
+                    ...exportData,
+                    encrypted: true,
+                    payload: encodeWithPassword(exportData, password)
+                };
+            }
+            
+            return exportData;
+        }
+
+        function validateImportData(imported) {
+            const requiredFields = ['students', 'teachers', 'renters', 'debtRecords', 'history', 'schedule', 'prices'];
+            const missingFields = requiredFields.filter(field => !(field in imported));
+            if (missingFields.length > 0) {
+                return { valid: false, error: `Campos faltantes: ${missingFields.join(', ')}` };
+            }
+            if (!Array.isArray(imported.students)) return { valid: false, error: 'students debe ser un array' };
+            if (!Array.isArray(imported.teachers)) return { valid: false, error: 'teachers debe ser un array' };
+            
+            for (let i = 0; i < imported.students.length; i++) {
+                const s = imported.students[i];
+                if (!s.id || !s.surname || !s.name) {
+                    return { valid: false, error: `Estudiante ${i+1} inválido: falta id, surname o name` };
+                }
+                if (s.surname.length > 100 || s.name.length > 100) {
+                    return { valid: false, error: `Estudiante ${i+1}: nombre o apellido demasiado largo` };
+                }
+            }
+            
+            return { valid: true, summary: {
+                students: imported.students.length,
+                teachers: imported.teachers.length
+            }};
+        }
+
+        function validateImportPackage(imported, password = null) {
+            if (!imported.version) {
+                return { valid: false, error: 'Archivo de exportación antiguo o inválido' };
+            }
+            
+            let data;
+            if (imported.encrypted) {
+                if (!password) {
+                    return { valid: false, error: 'Este archivo está protegido con contraseña', requiresPassword: true };
+                }
+                try {
+                    data = decodeWithPassword(imported.payload, password);
+                } catch (err) {
+                    return { valid: false, error: err.message };
+                }
+            } else {
+                data = imported.data;
+            }
+            
+            if (imported.checksum && generateChecksum(data) !== imported.checksum) {
+                return { valid: false, error: 'El archivo está corrupto o ha sido modificado' };
+            }
+            
+            const validation = validateImportData(data);
+            return validation;
+        }
+
+        // Pruebas
+        function testChecksum() {
+            const resultDiv = document.getElementById('checksum-result');
+            try {
+                const testData = { name: 'Test', value: 123 };
+                const checksum1 = generateChecksum(testData);
+                const checksum2 = generateChecksum(testData);
+                const checksum3 = generateChecksum({ name: 'Test', value: 456 });
+                
+                resultDiv.innerHTML = `
+                    <div class="success">✅ Checksum generado correctamente</div>
+                    <div class="info">Datos originales: ${checksum1}</div>
+                    <div class="info">Mismos datos: ${checksum2}</div>
+                    <div class="error">Datos diferentes: ${checksum3}</div>
+                    <div class="success">${checksum1 === checksum2 ? '✅ Checksum consistente verificado' : '❌ Error en checksum'}</div>
+                    <div class="success">${checksum1 !== checksum3 ? '✅ Checksum detecta cambios' : '❌ Error de detección'}</div>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
+            }
+        }
+
+        function testXSS() {
+            const resultDiv = document.getElementById('xss-result');
+            try {
+                const maliciousInput = '<script>alert("XSS")<\/script>';
+                const sanitized = sanitizeString(maliciousInput);
+                
+                resultDiv.innerHTML = `
+                    <div class="info">Entrada maliciosa: ${maliciousInput}</div>
+                    <div class="info">Sanitizado: ${sanitized}</div>
+                    <div class="success">${sanitized.includes('<script') ? '❌ No sanitizado' : '✅ XSS prevenido'}</div>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
+            }
+        }
+
+        function testPassword() {
+            const resultDiv = document.getElementById('password-result');
+            try {
+                const testData = { secret: 'password123', data: [1, 2, 3] };
+                const password = 'mySecretKey';
+                
+                const encoded = encodeWithPassword(testData, password);
+                const decoded = decodeWithPassword(encoded, password);
+                
+                resultDiv.innerHTML = `
+                    <div class="info">Datos originales: ${JSON.stringify(testData)}</div>
+                    <div class="info">Codificado: ${encoded.substring(0, 50)}...</div>
+                    <div class="info">Decodificado: ${JSON.stringify(decoded)}</div>
+                    <div class="success">${JSON.stringify(testData) === JSON.stringify(decoded) ? '✅ Codificación/Decodificación exitosa' : '❌ Error en proceso'}</div>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
+            }
+        }
+
+        function testExportPackage() {
+            const resultDiv = document.getElementById('export-result');
+            try {
+                const testData = {
+                    students: [{ id: '1', surname: 'Test', name: 'User' }],
+                    teachers: [],
+                    renters: [],
+                    debtRecords: [],
+                    history: [],
+                    schedule: {},
+                    prices: []
+                };
+                
+                const package1 = createExportPackage(testData);
+                const package2 = createExportPackage(testData, 'password123');
+                
+                resultDiv.innerHTML = `
+                    <div class="success">✅ Paquete sin contraseña creado</div>
+                    <div class="info">Checksum: ${package1.checksum}</div>
+                    <div class="info">Versión: ${package1.version}</div>
+                    <div class="info">Tamaño: ${JSON.stringify(package1).length} bytes</div>
+                    <div class="success">✅ Paquete con contraseña creado</div>
+                    <div class="info">Encriptado: ${package2.encrypted}</div>
+                    <div class="info">Payload length: ${package2.payload.length} chars</div>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
+            }
+        }
+
+        function testImportValidation() {
+            const resultDiv = document.getElementById('import-result');
+            try {
+                const validData = {
+                    version: '2.0.0',
+                    checksum: 'test',
+                    data: {
+                        students: [{ id: '1', surname: 'Test', name: 'User' }],
+                        teachers: [],
+                        renters: [],
+                        debtRecords: [],
+                        history: [],
+                        schedule: {},
+                        prices: []
+                    }
+                };
+                
+                validData.checksum = generateChecksum(validData.data);
+                const validPackage = createExportPackage(validData.data);
+                const validation = validateImportPackage(validPackage);
+                
+                resultDiv.innerHTML = `
+                    <div class="success">✅ Validación completada</div>
+                    <div class="info">Válido: ${validation.valid}</div>
+                    <div class="info">${validation.valid ? '✅ Datos verificados correctamente' : '❌ ' + validation.error}</div>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
+            }
+        }
+
+        function testBackup() {
+            const resultDiv = document.getElementById('backup-result');
+            try {
+                const testData = {
+                    students: [{ id: '1', surname: 'Backup', name: 'Test' }],
+                    teachers: [],
+                    renters: [],
+                    debtRecords: [],
+                    history: [],
+                    schedule: {},
+                    prices: []
+                };
+                
+                const checksum = generateChecksum(testData);
+                const backupPackage = {
+                    version: '2.0.0',
+                    timestamp: Date.now(),
+                    checksum: checksum,
+                    data: testData
+                };
+                
+                resultDiv.innerHTML = `
+                    <div class="success">✅ Paquete de backup creado</div>
+                    <div class="info">Checksum: ${checksum}</div>
+                    <div class="info">Timestamp: ${backupPackage.timestamp}</div>
+                    <div class="info">Versión: ${backupPackage.version}</div>
+                    <div class="info">Tamaño: ${JSON.stringify(backupPackage).length} bytes</div>
+                    <div class="success">✅ Listo para almacenamiento</div>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

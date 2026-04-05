@@ -1,0 +1,949 @@
+/*
+ Theme Name:   BEMBÉ Child Theme - Modernizado 2026
+ Theme URI:    https://bembespb.ru
+ Description:  Tema hijo modernizado con mejoras de diseño, rendimiento y seguridad
+ Author:       MiniMax Agent
+ Author URI:   https://bembespb.ru
+ Template:     bembespb
+ Version:      2.0.0
+ License:      GNU General Public License v2 or later
+ License URI:  http://www.gnu.org/licenses/gpl-2.0.html
+ Text Domain:  bembespb-child
+*/
+
+/* ==========================================================================
+   IMPORTAR FUENTES MODERNAS
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+/* ==========================================================================
+   VARIABLES CSS MODERNAS
+   ========================================================================== */
+:root {
+    /* Colores principales - Paleta latina vibrante */
+    --color-primary: #E63946;
+    --color-primary-dark: #C1121F;
+    --color-secondary: #F4A261;
+    --color-accent: #E9C46A;
+    --color-dark: #1D1D1D;
+    --color-light: #FAFAFA;
+    --color-white: #FFFFFF;
+
+    /* Gradientes */
+    --gradient-primary: linear-gradient(135deg, #E63946 0%, #F4A261 100%);
+    --gradient-dark: linear-gradient(135deg, #1D1D1D 0%, #2D2D2D 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+
+    /* Tipografía */
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-display: 'Playfair Display', Georgia, serif;
+
+    /* Espaciado */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+    --spacing-2xl: 5rem;
+
+    /* Bordes */
+    --border-radius-sm: 8px;
+    --border-radius-md: 12px;
+    --border-radius-lg: 20px;
+    --border-radius-xl: 30px;
+
+    /* Sombras */
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 20px rgba(0,0,0,0.12);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.16);
+    --shadow-glow: 0 0 40px rgba(230, 57, 70, 0.3);
+
+    /* Transiciones */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+/* ==========================================================================
+   RESET Y BASE MODERNA
+   ========================================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+    font-size: 16px;
+}
+
+body {
+    font-family: var(--font-primary);
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--color-dark);
+    background-color: var(--color-light);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+}
+
+/* ==========================================================================
+   TIPOGRAFÍA MODERNA
+   ========================================================================== */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: var(--spacing-sm);
+}
+
+h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+}
+
+h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+}
+
+h3 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+p {
+    margin-bottom: var(--spacing-sm);
+    color: #555;
+}
+
+/* ==========================================================================
+   HEADER MODERNO
+   ========================================================================== */
+header,
+.site-header,
+.header {
+    background: var(--gradient-dark);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-md);
+}
+
+header.scrolled {
+    padding: var(--spacing-xs) var(--spacing-lg);
+    background: rgba(29, 29, 29, 0.95);
+}
+
+/* Logo */
+.mal_logo_1x,
+.site-logo img,
+header img[src*="logo"] {
+    height: 50px;
+    width: auto;
+    transition: transform var(--transition-normal);
+}
+
+.mal_logo_1x:hover,
+.site-logo img:hover {
+    transform: scale(1.05);
+}
+
+/* Navegación */
+nav ul,
+.menu,
+.nav-menu {
+    display: flex;
+    gap: var(--spacing-md);
+    list-style: none;
+    align-items: center;
+}
+
+nav a,
+.menu a,
+.nav-menu a {
+    color: var(--color-white);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+nav a::after,
+.menu a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--color-primary);
+    transition: all var(--transition-normal);
+    transform: translateX(-50%);
+}
+
+nav a:hover::after,
+.menu a:hover::after {
+    width: 100%;
+}
+
+nav a:hover,
+.menu a:hover {
+    color: var(--color-secondary);
+}
+
+/* ==========================================================================
+   BOTONES MODERNOS
+   ========================================================================== */
+button,
+.btn,
+.button,
+input[type="submit"],
+a.btn,
+.wp-block-button__link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-family: var(--font-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    border-radius: var(--border-radius-xl);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Botón primario */
+.btn-primary,
+button[type="submit"],
+input[type="submit"],
+a[href*="zapisatsya"],
+a[href*="Записаться"] {
+    background: var(--gradient-primary);
+    color: var(--color-white);
+    box-shadow: var(--shadow-md), var(--shadow-glow);
+}
+
+.btn-primary:hover,
+button[type="submit"]:hover,
+input[type="submit"]:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg), 0 0 60px rgba(230, 57, 70, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(-1px);
+}
+
+/* Efecto ripple */
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Botón secundario */
+.btn-secondary {
+    background: transparent;
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+}
+
+.btn-secondary:hover {
+    background: var(--color-primary);
+    color: var(--color-white);
+    transform: translateY(-3px);
+}
+
+/* ==========================================================================
+   HERO SECTION MODERNA
+   ========================================================================== */
+.hero,
+section:first-of-type,
+.home-hero {
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: var(--gradient-dark);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></svg>');
+    background-size: 50px 50px;
+    animation: float 20s linear infinite;
+}
+
+@keyframes float {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(-100px) rotate(360deg); }
+}
+
+.hero h1 {
+    color: var(--color-white);
+    text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    animation: fadeInUp 1s ease;
+}
+
+.hero h1 span,
+.hero h1 strong {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ==========================================================================
+   TARJETAS DE ESTILOS DE BAILE - GLASSMORPHISM
+   ========================================================================== */
+.dance-style-card,
+.style-card,
+article,
+.card {
+    background: var(--color-white);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+}
+
+.dance-style-card:hover,
+.style-card:hover,
+article:hover,
+.card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Efecto glassmorphism en hover */
+.dance-style-card::before,
+.style-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--gradient-glass);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
+}
+
+.dance-style-card:hover::before,
+.style-card:hover::before {
+    opacity: 1;
+}
+
+.dance-style-card img,
+.style-card img,
+.card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+}
+
+.dance-style-card:hover img,
+.style-card:hover img,
+.card:hover img {
+    transform: scale(1.1);
+}
+
+.dance-style-card .card-content,
+.style-card .content,
+.card-body {
+    padding: var(--spacing-lg);
+}
+
+.dance-style-card h3,
+.style-card h3 {
+    font-family: var(--font-display);
+    color: var(--color-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+/* ==========================================================================
+   SECCIÓN DE PRECIOS MODERNA
+   ========================================================================== */
+.pricing-section,
+.price-cards,
+section[class*="price"] {
+    padding: var(--spacing-2xl) var(--spacing-lg);
+    background: linear-gradient(180deg, var(--color-light) 0%, #F0F0F0 100%);
+}
+
+.price-card,
+.pricing-card {
+    background: var(--color-white);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    text-align: center;
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+}
+
+.price-card:hover,
+.pricing-card:hover {
+    transform: translateY(-15px);
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
+}
+
+.price-card.featured,
+.pricing-card.popular {
+    border: 3px solid var(--color-primary);
+    transform: scale(1.05);
+}
+
+.price-card.featured::before {
+    content: 'POPULAR';
+    position: absolute;
+    top: 20px;
+    right: -35px;
+    background: var(--gradient-primary);
+    color: white;
+    padding: 5px 40px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transform: rotate(45deg);
+}
+
+.price-amount,
+.price {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    font-family: var(--font-primary);
+}
+
+.price-amount small,
+.price small {
+    font-size: 1rem;
+    color: #888;
+    font-weight: 400;
+}
+
+/* ==========================================================================
+   SECCIÓN DE PRECIOS - LETRAS BLANCAS
+   ========================================================================== */
+.price-card,
+.pricing-card {
+    background: var(--gradient-dark);
+    color: #ffffff;
+}
+
+.price-card *,
+.pricing-card * {
+    color: #ffffff !important;
+}
+
+.price-card .price-amount,
+.price-card .price,
+.pricing-card .price-amount,
+.pricing-card .price {
+    color: #ffffff !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.price-card h3,
+.price-card h4,
+.price-card .card-title,
+.pricing-card h3,
+.pricing-card h4,
+.pricing-card .card-title {
+    color: #ffffff !important;
+}
+
+.price-card p,
+.price-card li,
+.pricing-card p,
+.pricing-card li {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.price-card:hover,
+.pricing-card:hover {
+    background: linear-gradient(135deg, #2D2D2D 0%, #3D3D3D 100%);
+}
+
+/* ==========================================================================
+   FORMULARIOS MODERNOS
+   ========================================================================== */
+form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="number"],
+textarea,
+select {
+    width: 100%;
+    padding: var(--spacing-md);
+    font-family: var(--font-primary);
+    font-size: 1rem;
+    border: 2px solid #E0E0E0;
+    border-radius: var(--border-radius-md);
+    transition: all var(--transition-fast);
+    background: var(--color-white);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.1);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #AAA;
+}
+
+/* Labels flotantes */
+.form-group {
+    position: relative;
+    margin-bottom: var(--spacing-md);
+}
+
+.form-group label {
+    position: absolute;
+    left: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    transition: all var(--transition-fast);
+    pointer-events: none;
+    background: var(--color-white);
+    padding: 0 var(--spacing-xs);
+}
+
+.form-group input:focus + label,
+.form-group input:not(:placeholder-shown) + label {
+    top: 0;
+    font-size: 0.85rem;
+    color: var(--color-primary);
+}
+
+/* Checkbox moderno */
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border: 2px solid #DDD;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+input[type="checkbox"]:checked {
+    background: var(--gradient-primary);
+    border-color: var(--color-primary);
+}
+
+input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 14px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* ==========================================================================
+   FOOTER MODERNO
+   ========================================================================== */
+footer,
+.site-footer {
+    background: var(--gradient-dark);
+    color: var(--color-white);
+    padding: var(--spacing-2xl) var(--spacing-lg) var(--spacing-lg);
+    position: relative;
+}
+
+footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-primary);
+}
+
+footer a {
+    color: var(--color-secondary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+footer a:hover {
+    color: var(--color-white);
+}
+
+.footer-copyright {
+    text-align: center;
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: var(--spacing-lg);
+    color: #888;
+}
+
+/* ==========================================================================
+   ANIMACIONES DE SCROLL
+   ========================================================================== */
+.fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s ease;
+}
+
+.fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.slide-in-left {
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: all 0.8s ease;
+}
+
+.slide-in-left.visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.slide-in-right {
+    opacity: 0;
+    transform: translateX(50px);
+    transition: all 0.8s ease;
+}
+
+.slide-in-right.visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* ==========================================================================
+   BOTÓN FLOTANTE WHATSAPP
+   ========================================================================== */
+.whatsapp-float {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: #25D366;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+    z-index: 9999;
+    transition: all var(--transition-normal);
+    animation: pulse 2s infinite;
+}
+
+.whatsapp-float:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 30px rgba(37, 211, 102, 0.6);
+}
+
+.whatsapp-float svg {
+    width: 35px;
+    height: 35px;
+    fill: white;
+}
+
+/* ==========================================================================
+   MODAL/POPUP MODERNO
+   ========================================================================== */
+.modal,
+.popup,
+[class*="modal"] {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+}
+
+.modal-content,
+.popup-content {
+    background: var(--color-white);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    max-width: 500px;
+    margin: 10vh auto;
+    animation: fadeInUp 0.3s ease;
+    box-shadow: var(--shadow-lg);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+@media (max-width: 1200px) {
+    :root {
+        --spacing-2xl: 4rem;
+    }
+}
+
+@media (max-width: 992px) {
+    nav ul,
+    .menu,
+    .nav-menu {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .hero {
+        min-height: 70vh;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --spacing-2xl: 3rem;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    h2 {
+        font-size: 1.75rem;
+    }
+
+    .price-card.featured {
+        transform: scale(1);
+    }
+
+    .whatsapp-float {
+        bottom: 20px;
+        right: 20px;
+        width: 55px;
+        height: 55px;
+    }
+}
+
+@media (max-width: 480px) {
+    html {
+        font-size: 14px;
+    }
+
+    button,
+    .btn {
+        width: 100%;
+        padding: var(--spacing-md);
+    }
+}
+
+/* ==========================================================================
+   PERFORMANCE OPTIMIZATIONS
+   ========================================================================== */
+
+/* Will-change for smooth animations */
+.optimize-animation {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+}
+
+/* GPU acceleration */
+.gpu-accelerated {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* Preload critical images */
+.preload-image {
+    display: none;
+}
+
+/* ==========================================================================
+   ACCESSIBILITY IMPROVEMENTS
+   ========================================================================== */
+
+/* Focus styles for accessibility */
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Skip to content link */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--color-primary);
+    color: white;
+    padding: 8px;
+    z-index: 10000;
+    transition: top 0.3s;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    :root {
+        --color-primary: #ff0000;
+        --color-dark: #000000;
+        --color-light: #ffffff;
+    }
+}
+
+/* ==========================================================================
+   RESPONSIVE UTILITIES
+   ========================================================================== */
+
+.mobile-only { display: none; }
+.desktop-only { display: block; }
+
+@media (max-width: 768px) {
+    .mobile-only { display: block; }
+    .desktop-only { display: none; }
+}
+
+/* ==========================================================================
+   UTILITIES
+   ========================================================================== */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.mt-1 { margin-top: var(--spacing-sm); }
+.mt-2 { margin-top: var(--spacing-md); }
+.mt-3 { margin-top: var(--spacing-lg); }
+.mt-4 { margin-top: var(--spacing-xl); }
+
+.mb-1 { margin-bottom: var(--spacing-sm); }
+.mb-2 { margin-bottom: var(--spacing-md); }
+.mb-3 { margin-bottom: var(--spacing-lg); }
+.mb-4 { margin-bottom: var(--spacing-xl); }
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-lg);
+}
+
+.grid {
+    display: grid;
+    gap: var(--spacing-lg);
+}
+
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.grid-4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+.flex {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.flex-center {
+    justify-content: center;
+    align-items: center;
+}
+
+.hidden { display: none !important; }
+.visible { display: block !important; }
+
+/* ==========================================================================
+   LAZY LOADING IMAGES
+   ========================================================================== */
+img[loading="lazy"] {
+    opacity: 0;
+    transition: opacity var(--transition-slow);
+}
+
+img[loading="lazy"].loaded {
+    opacity: 1;
+}
+
+/* Placeholder mientras carga */
+img[loading="lazy"]:not(.loaded) {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}

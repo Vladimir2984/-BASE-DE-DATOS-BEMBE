@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">✦ BEMBE ✦</string>
+    <string name="export_success">Datos exportados correctamente</string>
+    <string name="export_error">Error al exportar datos</string>
+    <string name="import_success">Datos importados correctamente</string>
+    <string name="import_error">Error al importar datos</string>
+    <string name="import_cancelled">Importación cancelada</string>
+    <string name="permission_required">Permiso de almacenamiento requerido</string>
+    <string name="loading">Cargando BEMBE…</string>
+</resources>
