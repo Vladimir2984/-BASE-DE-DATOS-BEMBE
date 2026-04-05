@@ -1172,15 +1172,11 @@ function createExportPackage(data, password = null) {
   return exportData;
 }
 
-// Validate and decrypt import package
+// Validate and decrypt import package - COMPATIBLE CON CUALQUIER VERSIÓN
 function validateImportPackage(imported, password = null) {
-  // Check version compatibility
-  if (!imported.version) {
-    return { valid: false, error: 'Archivo de exportación antiguo o inválido' };
-  }
-  
   let data;
-  
+  let isOldFormat = false;
+
   // Decrypt if necessary
   if (imported.encrypted) {
     if (!password) {
@@ -1191,25 +1187,39 @@ function validateImportPackage(imported, password = null) {
     } catch (err) {
       return { valid: false, error: err.message };
     }
-  } else {
+  } else if (imported.data) {
+    // Formato nuevo con versión
     data = imported.data;
+  } else if (imported.students || importado.teachers) {
+    // Formato antiguo - datos directamente en el raíz
+    data = imported;
+    isOldFormat = true;
+  } else {
+    return { valid: false, error: 'Archivo JSON inválido o no compatible' };
   }
-  
-  // Validate checksum
+
+  // Validate checksum (only if available - old formats may not have it)
   if (imported.checksum && generateChecksum(data) !== imported.checksum) {
     return { valid: false, error: 'El archivo está corrupto o ha sido modificado' };
   }
   
   // Sanitize all data
   const sanitizedData = sanitizeAppData(data);
-  
+
   // Validate structure
   const validation = validateImportData(sanitizedData);
   if (!validation.valid) {
     return validation;
   }
-  
-  return { valid: true, data: sanitizedData, summary: validation.summary, metadata: imported.metadata };
+
+  return { 
+    valid: true, 
+    data: sanitizedData, 
+    summary: validation.summary, 
+    metadata: imported.metadata || {},
+    isOldFormat: isOldFormat,
+    version: imported.version || 'antigua'
+  };
 }
 
 // ==================== EXPORT / IMPORT ====================
@@ -1369,48 +1379,70 @@ function rotateOldBackups() {
 }
 
 function validateImportData(imported) {
-// Validate required fields exist
+// Validate required fields exist - FLEXIBLE con formatos antiguos
 const requiredFields = ['students', 'teachers', 'renters', 'debtRecords', 'history', 'schedule', 'prices'];
 const missingFields = requiredFields.filter(field => !(field in imported));
+
+// Si faltan campos, los agregamos con valores por defecto en lugar de rechazar
 if (missingFields.length > 0) {
-return { valid: false, error: `Campos faltantes: ${missingFields.join(', ')}` };
+  console.log('Formato antiguo detectado, agregando campos faltantes:', missingFields);
+  missingFields.forEach(field => {
+    if (field === 'schedule') imported[field] = {};
+    else if (Array.isArray(imported.students)) imported[field] = [];
+    else imported[field] = [];
+  });
 }
-// Validate data types
-if (!Array.isArray(imported.students)) return { valid: false, error: 'students debe ser un array' };
-if (!Array.isArray(imported.teachers)) return { valid: false, error: 'teachers debe ser un array' };
-if (!Array.isArray(imported.renters)) return { valid: false, error: 'renters debe ser un array' };
-if (!Array.isArray(imported.debtRecords)) return { valid: false, error: 'debtRecords debe ser un array' };
-if (!Array.isArray(imported.history)) return { valid: false, error: 'history debe ser un array' };
-if (typeof imported.schedule !== 'object') return { valid: false, error: 'schedule debe ser un objeto' };
-if (!Array.isArray(imported.prices)) return { valid: false, error: 'prices debe ser un array' };
 
-// Validate and sanitize student structure
+// Validate data types - convertir si es necesario
+if (!Array.isArray(imported.students)) {
+  imported.students = Array.isArray(imported.students) ? imported.students : [];
+}
+if (!Array.isArray(imported.teachers)) {
+  imported.teachers = Array.isArray(imported.teachers) ? imported.teachers : [];
+}
+if (!Array.isArray(imported.renters)) {
+  imported.renters = Array.isArray(imported.renters) ? imported.renters : [];
+}
+if (!Array.isArray(imported.debtRecords)) {
+  imported.debtRecords = Array.isArray(imported.debtRecords) ? imported.debtRecords : [];
+}
+if (!Array.isArray(imported.history)) {
+  imported.history = Array.isArray(imported.history) ? imported.history : [];
+}
+if (typeof imported.schedule !== 'object' || imported.schedule === null) {
+  imported.schedule = {};
+}
+if (!Array.isArray(imported.prices)) {
+  imported.prices = [];
+}
+
+// Validate and sanitize student structure - más tolerante
 for (let i = 0; i < imported.students.length; i++) {
-const s = imported.students[i];
-if (!s.id || !s.surname || !s.name) {
-return { valid: false, error: `Estudiante ${i+1} inválido: falta id, surname o name` };
-}
-// Validate field lengths to prevent abuse
-if (s.surname.length > 100 || s.name.length > 100) {
-  return { valid: false, error: `Estudiante ${i+1}: nombre o apellido demasiado largo (máx 100 caracteres)` };
-}
-if (s.phone && s.phone.length > 20) {
-  return { valid: false, error: `Estudiante ${i+1}: número de teléfono demasiado largo` };
-}
+  const s = imported.students[i];
+  // Solo validar que tenga al menos un identificador
+  if (!s.id) {
+    s.id = 'student_' + i + '_' + Date.now();
+  }
+  if (!s.surname) s.surname = 'Sin apellido';
+  if (!s.name) s.name = 'Sin nombre';
+  
+  // Validate field lengths to prevent abuse
+  if (s.surname.length > 100) s.surname = s.surname.substring(0, 100);
+  if (s.name.length > 100) s.name = s.name.substring(0, 100);
+  if (s.phone && s.phone.length > 20) s.phone = s.phone.substring(0, 20);
 }
 
-// Validate teachers
+// Validate teachers - más tolerante
 for (let i = 0; i < imported.teachers.length; i++) {
   const t = imported.teachers[i];
-  if (t.name && t.name.length > 100) {
-    return { valid: false, error: `Profesor ${i+1}: nombre demasiado largo` };
-  }
+  if (!t.id) t.id = 'teacher_' + i + '_' + Date.now();
+  if (t.name && t.name.length > 100) t.name = t.name.substring(0, 100);
 }
 
 // Check file size estimate
 const estimatedSize = JSON.stringify(imported).length;
-if (estimatedSize > 5 * 1024 * 1024) { // 5MB limit
-return { valid: false, error: 'Archivo demasiado grande (>5MB)' };
+if (estimatedSize > 10 * 1024 * 1024) { // 10MB limit
+return { valid: false, error: 'Archivo demasiado grande (>10MB)' };
 }
 return { valid: true, summary: {
 students: imported.students.length,
