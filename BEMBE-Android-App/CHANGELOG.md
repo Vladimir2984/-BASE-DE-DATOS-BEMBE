@@ -4,7 +4,47 @@ Todos los cambios notables en este proyecto.
 
 ---
 
-## [3.1.0] - 2026-04-05
+## [3.1.2] - 2026-04-05
+
+### 🎉 Lanzamiento Crítico: Importación 100% Compatible con Versiones Antiguas
+
+Esta versión corrige el problema de rechazo de archivos de versiones anteriores.
+
+### 🔧 Corregido
+
+#### Importación Universal
+- **Error corregido**: "Archivo de exportación antiguo o inválido"
+- **Solución**: Ahora acepta CUALQUIER archivo JSON compatible
+
+- **Auto-completar campos faltantes**:
+  - Si el archivo antiguo no tiene `schedule`, `prices`, `renters`, etc.
+  - Se agregan automáticamente con valores por defecto
+  - No se rechaza el archivo por campos faltantes
+
+- **Auto-generar IDs**:
+  - Si estudiantes/profesores no tienen ID
+  - Se genera automáticamente: `student_0_timestamp`, `teacher_0_timestamp`
+  - Permite importar archivos sin IDs
+
+- **Validación tolerante**:
+  - Antes: Rechazaba si faltaba cualquier campo obligatorio
+  - Ahora: Completa automáticamente y permite importación
+  - Mantiene seguridad (anti-XSS, límites de longitud)
+
+- **Límite de archivo aumentado**:
+  - De 5MB a 10MB
+  - Compatible con archivos más grandes
+
+### ✨ Agregado
+
+- Mensajes descriptivos cuando se detecta formato antiguo
+- Auto-corrección de estructuras incompatibles
+- Soporte para archivos sin número de versión
+- Compatibilidad con formatos v1.x, v2.0.0, v3.0.0, v3.1.0
+
+---
+
+## [3.1.1] - 2026-04-05
 
 ### 🎉 Lanzamiento Importante: Sincronización en la Nube + Logo + Horario Completo
 

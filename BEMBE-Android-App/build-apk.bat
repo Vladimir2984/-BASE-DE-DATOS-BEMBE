@@ -1,7 +1,7 @@
 @echo off
 echo ========================================
-echo   BEMBE Android App - Build APK v3.1.0
-echo   Sincronizacion en la Nube + Logo
+echo   BEMBE Android App - Build APK v3.1.2
+echo   Importacion 100%% Compatible
 echo ========================================
 echo.
 
