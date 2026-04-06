@@ -1,0 +1,45 @@
+{
+  "version": "3.1.4",
+  "releaseDate": "2026-04-06",
+  "minVersion": "3.0.0",
+  "description": "Escuela Bembe 2026 + Horario Sábado/Domingo",
+  "changelog": [
+    "Logo ESCUELA BEMBE 2026 en esquina superior izquierda",
+    "Sábado: 10:00 - 12:00 Práctica Libre",
+    "Domingo: 18:00 - 20:00 Clase Especial",
+    "Mejoras en traducciones ES/RU/EN"
+  ],
+  "files": {
+    "CODIGO OK.html": {
+      "url": "https://raw.githubusercontent.com/Vladimir2984/-BASE-DE-DATOS-BEMBE/master/CODIGO%20OK.html",
+      "sha256": "70f4fb53461e488b8df713913b2f4e0e761ada632fe2d46eac2f746cc8e815c5",
+      "size": 142712,
+      "description": "Archivo principal de la aplicación"
+    }
+  },
+  "patches": {
+    "schedule": {
+      "saturday": {
+        "className": "Práctica Libre",
+        "times": ["10:00-11:00", "11:00-12:00"]
+      },
+      "sunday": {
+        "className": "Clase Especial",
+        "times": ["18:00-20:00"]
+      }
+    },
+    "translations": {
+      "es": {
+        "title": "✦ Escuela Bembe 2026 ✦"
+      },
+      "ru": {
+        "title": "✦ Escuela Bembe 2026 ✦"
+      },
+      "en": {
+        "title": "✦ Escuela Bembe 2026 ✦"
+      }
+    }
+  },
+  "breaking": false,
+  "forceUpdate": false
+}
