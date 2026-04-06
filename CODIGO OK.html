@@ -6,10 +6,23 @@
 <title>✦ BEMBE ✦ - Sistema de Gestión</title>
 <script>
 // Debug: track loading stages
-console.log('[BEMBE] Loading started');
-window.addEventListener('load', () => console.log('[BEMBE] Window load event fired'));
+console.log('[BEMBE] Loading started at', new Date().toISOString());
+
+// Init immediately without waiting for DOMContentLoaded
+function boot() {
+console.log('[BEMBE] Boot function called');
+try {
+initStarryBg();
+initIntro();
+} catch(e) {
+console.error('[BEMBE] Boot error:', e);
+document.getElementById('introScreen').style.display = 'none';
+document.getElementById('mainApp').classList.remove('hidden');
+initApp();
+}
+}
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4" onload="console.log('[BEMBE] Tailwind loaded')" onerror="console.error('[BEMBE] Tailwind failed to load')"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4" async onload="console.log('[BEMBE] Tailwind loaded')" onerror="console.error('[BEMBE] Tailwind failed')"></script>
 <style>
 @keyframes flyInStar { from { opacity:0; transform:scale(0) translateY(20px); } to { opacity:1; transform:scale(1) translateY(0); } }
 @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
@@ -169,13 +182,13 @@ flex-shrink: 0;
   <button onclick="changeLanguage('en')" style="width:32px;height:32px;border-radius:50%;background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);cursor:pointer;font-weight:700;">EN</button>
 </div>
 <!-- INTRO SCREEN -->
-<div id="introScreen" style="position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0c2248 0%,#020a18 70%);transition:opacity 1s;">
+<div id="introScreen" style="position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0c2248 0%,#020a18 70%);transition:opacity 0.5s;">
 <div id="introStars"></div>
 <div style="position:relative;z-index:10;text-align:center;">
 <div style="font-size:3.5rem;font-weight:800;color:#fbbf24;text-shadow:0 0 40px rgba(251,191,36,0.5),0 0 80px rgba(59,130,246,0.3);">✦ BEMBE ✦</div>
-<p id="introSubtext" style="color:rgba(147,197,253,0.6);font-size:0.85rem;text-transform:uppercase;letter-spacing:5px;margin:12px 0 24px;opacity:0;animation:fadeIn 1s ease-out 1.5s forwards;">Cargando Sistema</p>
-<div id="introBarWrap" style="width:208px;height:4px;background:rgba(255,255,255,0.1);border-radius:9999px;overflow:hidden;margin:0 auto;opacity:0;animation:fadeIn 1s ease-out 1.5s forwards;">
-<div id="introBar" style="height:100%;width:0%;border-radius:9999px;background:linear-gradient(90deg,#3b82f6,#fbbf24);box-shadow:0 0 10px #fbbf24;transition:width 0.2s;"></div>
+<p id="introSubtext" style="color:rgba(147,197,253,0.6);font-size:0.85rem;text-transform:uppercase;letter-spacing:5px;margin:12px 0 24px;animation:fadeIn 0.5s ease-out 0.3s forwards;">Cargando Sistema...</p>
+<div id="introBarWrap" style="width:208px;height:4px;background:rgba(255,255,255,0.1);border-radius:9999px;overflow:hidden;margin:0 auto;animation:fadeIn 0.5s ease-out 0.3s forwards;">
+<div id="introBar" style="height:100%;width:0%;border-radius:9999px;background:linear-gradient(90deg,#3b82f6,#fbbf24);box-shadow:0 0 10px #fbbf24;"></div>
 </div>
 </div>
 </div>
@@ -382,8 +395,10 @@ requestAnimationFrame(animate);
 }
 // ==================== INTRO ====================
 function initIntro() {
-console.log('[BEMBE] initIntro called');
+console.log('[BEMBE] initIntro starting...');
+try {
 const starsDiv = document.getElementById('introStars');
+// Create stars
 for (let i = 0; i < 120; i++) {
 const el = document.createElement('div');
 const size = Math.random()>0.7?3:Math.random()>0.4?2:1;
@@ -393,25 +408,42 @@ const delay = Math.random()*2;
 el.style.cssText = `position:absolute;border-radius:50%;left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;background:${golden?'#fbbf24':'white'};box-shadow:${golden?'0 0 8px rgba(251,191,36,0.8)':'0 0 4px rgba(200,220,255,0.7)'};opacity:0;animation:flyInStar ${dur}s ease-out ${delay}s forwards;`;
 starsDiv.appendChild(el);
 }
-let progress = 0;
+console.log('[BEMBE] Stars created');
+
+// Animate progress bar
 const bar = document.getElementById('introBar');
+let progress = 0;
 const interval = setInterval(() => {
-progress = Math.min(progress + 3, 100);
+progress += 5;
+if (progress > 100) progress = 100;
 bar.style.width = progress + '%';
-}, 30);
-// Reduced intro time from 4.8s to 2s
+if (progress >= 100) clearInterval(interval);
+}, 50);
+
+// Hide intro after 1.5s, show app
 setTimeout(() => {
-console.log('[BEMBE] Hiding intro');
-document.getElementById('introScreen').style.opacity = '0';
+console.log('[BEMBE] Hiding intro...');
+const introScreen = document.getElementById('introScreen');
+const mainApp = document.getElementById('mainApp');
+if (introScreen) introScreen.style.opacity = '0';
+if (mainApp) mainApp.classList.remove('hidden');
+console.log('[BEMBE] Main app visible');
+}, 1200);
+
+setTimeout(() => {
+console.log('[BEMBE] Removing intro, calling initApp...');
+const introScreen = document.getElementById('introScreen');
+if (introScreen) introScreen.style.display = 'none';
+initApp();
+console.log('[BEMBE] App fully initialized');
 }, 1500);
-setTimeout(() => {
-clearInterval(interval);
-console.log('[BEMBE] Showing main app');
+} catch (error) {
+console.error('[BEMBE] ERROR in initIntro:', error);
+// Emergency fallback - show app immediately
 document.getElementById('introScreen').style.display = 'none';
 document.getElementById('mainApp').classList.remove('hidden');
-console.log('[BEMBE] Calling initApp');
 initApp();
-}, 2000);
+}
 }
 // ==================== CALENDAR ====================
 let calDate = new Date();
@@ -2991,10 +3023,10 @@ saveData = function() {
   }
 };
 
-// Start
+// Start - boot as soon as DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-initStarryBg();
-initIntro();
+console.log('[BEMBE] DOMContentLoaded fired');
+setTimeout(() => boot(), 100);
 });
 </script>
 </body>
