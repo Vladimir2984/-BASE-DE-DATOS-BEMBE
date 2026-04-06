@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>BEMBE - Forzar Actualización de Usuarios</title>
+<style>
+body { margin:0; font-family:'Segoe UI',system-ui,sans-serif; background:radial-gradient(ellipse at center,#0c2248 0%,#020a18 70%); color:#e2e8f0; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+.container { text-align:center; max-width:600px; padding:40px; }
+h1 { font-size:2rem; background:linear-gradient(135deg,#fbbf24,#f59e0b,#fbbf24); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:20px; }
+p { color:rgba(147,197,253,0.7); margin:12px 0; }
+code { background:rgba(0,0,0,0.3); padding:8px 16px; border-radius:8px; display:block; margin:12px 0; font-size:0.8rem; word-break:break-all; }
+button { margin-top:20px; padding:12px 32px; background:linear-gradient(135deg,#3b82f6,#2563eb); color:white; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-size:1rem; }
+button:hover { transform:translateY(-2px); box-shadow:0 4px 15px rgba(59,130,246,0.4); }
+.success { color:#10b981; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🔄 BEMBE - Forzar Actualización</h1>
+<p>Este archivo limpia el caché de verificación de actualizaciones</p>
+<p>Haz clic en el botón para limpiar y abrir la app actualizada</p>
+<div id="status" class="success" style="display:none;"></div>
+<button onclick="forceCleanUpdate()">🔄 Limpiar caché y actualizar</button>
+</div>
+
+<script>
+async function forceCleanUpdate() {
+const status = document.getElementById('status');
+status.style.display = 'block';
+status.textContent = 'Limpiando caché de verificación...';
+
+// Limpiar caché de verificación de actualizaciones
+localStorage.removeItem('bembe_last_update_check');
+localStorage.removeItem('bembe_local_date');
+localStorage.removeItem('bembe_cached_app');
+
+status.textContent = '✅ Caché limpiado. Abriendo última versión...';
+
+// Abrir la versión local (que ya es la última)
+setTimeout(() => {
+window.location.href = 'CODIGO OK.html';
+}, 500);
+}
+</script>
+</body>
+</html>
