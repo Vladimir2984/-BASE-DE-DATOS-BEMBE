@@ -1,4 +1,4 @@
-<!-- BEMBE Auto-Updater Launcher v3.1.2 -->
+<!-- BEMBE Auto-Updater Launcher v3.1.3 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -26,99 +26,94 @@ h1 { font-size:2.5rem; background:linear-gradient(135deg,#fbbf24,#f59e0b,#fbbf24
 <script>
 const GITHUB_RAW = 'https://raw.githubusercontent.com/Vladimir2984/-BASE-DE-DATOS-BEMBE/master/CODIGO%20OK.html';
 const VERSION_KEY = 'bembe_last_update_check';
-const APP_FILE = 'CODIGO OK.html';
+const CACHE_KEY = 'bembe_cached_app';
+const CACHE_DATE_KEY = 'bembe_cache_date';
 
 async function updateProgress(percent, status, message) {
   document.getElementById('progress').style.width = percent + '%';
   document.getElementById('status').textContent = status;
   if (message) document.getElementById('message').textContent = message;
+  console.log(`[${percent}%] ${status} - ${message || ''}`);
+}
+
+async function openApp(htmlContent, source) {
+  console.log(`Opening app from: ${source}`);
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  window.location.href = url;
+}
+
+function openLocalFile() {
+  console.log('Falling back to local file');
+  window.location.href = 'CODIGO OK.html';
 }
 
 async function checkAndUpdate() {
   try {
     await updateProgress(10, 'Conectando con GitHub...', 'Verificando última versión');
-    
-    // Check if there's a newer version on GitHub
-    const response = await fetch(GITHUB_RAW, { method: 'HEAD', cache: 'no-cache' });
-    
+
+    // Fetch with timeout to avoid hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    const response = await fetch(GITHUB_RAW, {
+      method: 'GET',
+      cache: 'no-cache',
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
-      throw new Error('No se pudo conectar con GitHub');
+      throw new Error(`GitHub responded with ${response.status}`);
     }
-    
-    const lastModified = response.headers.get('Last-Modified');
-    const lastCheck = localStorage.getItem(VERSION_KEY);
-    
-    // If we checked less than 1 hour ago and no update needed, skip
-    if (lastCheck && lastModified && (Date.now() - parseInt(lastCheck)) < 3600000) {
-      await updateProgress(50, 'Versión actual verificada', 'Abriendo aplicación...');
-      setTimeout(() => openApp(), 500);
-      return;
-    }
-    
+
     await updateProgress(30, 'Descargando última versión...', 'Esto puede tomar unos segundos');
-    
-    // Download the latest version
-    const appResponse = await fetch(GITHUB_RAW);
-    if (!appResponse.ok) throw new Error('Error descargando aplicación');
-    
-    const latestCode = await appResponse.text();
-    
+
+    const latestCode = await response.text();
+
     await updateProgress(60, 'Verificando integridad...', 'Comprobando que el archivo es válido');
-    
+
     // Verify it's a valid BEMBE app
-    if (!latestCode.includes('BEMBE') || !latestCode.includes('appData')) {
-      throw new Error('Archivo descargado no es válido');
+    if (!latestCode.includes('BEMBE')) {
+      throw new Error('Archivo descargado no es válido: no contiene BEMBE');
     }
-    
+
     await updateProgress(80, 'Guardando actualización...', 'Preparando para abrir');
-    
-    // Save to localStorage as cached version
-    localStorage.setItem('bembe_cached_app', latestCode);
+
+    // Save to localStorage
+    localStorage.setItem(CACHE_KEY, latestCode);
     localStorage.setItem(VERSION_KEY, Date.now().toString());
-    localStorage.setItem('bembe_cache_date', lastModified || new Date().toISOString());
-    
+    localStorage.setItem(CACHE_DATE_KEY, new Date().toISOString());
+
     await updateProgress(100, '¡Actualización completada!', 'Abriendo aplicación...');
-    
-    // Open the cached (latest) version
-    setTimeout(() => openApp(), 1000);
-    
+
+    // Open the cached version
+    setTimeout(() => openApp(latestCode, 'github'), 500);
+
   } catch (error) {
     console.error('Update error:', error);
-    
+    document.getElementById('status').className = 'status';
+
     // If update fails, try to open cached version
-    const cached = localStorage.getItem('bembe_cached_app');
-    if (cached) {
-      await updateProgress(100, 'Usando versión en caché', 'Abriendo aplicación...');
-      setTimeout(() => openApp(), 1000);
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached && cached.includes('BEMBE')) {
+      await updateProgress(100, '⚠️ Usando versión en caché', 'No se pudo conectar con GitHub');
+      document.getElementById('message').textContent = `Error: ${error.message}`;
+      setTimeout(() => openApp(cached, 'cache'), 1500);
     } else {
       // If no cache, redirect to local file
       document.getElementById('status').className = 'status error';
       document.getElementById('status').textContent = '⚠️ No se pudo actualizar';
-      document.getElementById('message').textContent = 'Abriendo versión local...';
-      
-      setTimeout(() => {
-        window.location.href = 'CODIGO OK.html';
-      }, 2000);
-    }
-  }
-}
+      document.getElementById('message').textContent = `Error: ${error.message}. Abriendo versión local en 3 segundos...`;
 
-function openApp() {
-  const cached = localStorage.getItem('bembe_cached_app');
-  if (cached) {
-    // Open cached version as blob
-    const blob = new Blob([cached], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    window.location.href = url;
-  } else {
-    // Fallback to local file
-    window.location.href = 'CODIGO OK.html';
+      setTimeout(() => openLocalFile(), 3000);
+    }
   }
 }
 
 // Start update process
 window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(checkAndUpdate, 500);
+  setTimeout(checkAndUpdate, 300);
 });
 </script>
 </body>
