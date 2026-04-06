@@ -4,7 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>✦ BEMBE ✦ - Sistema de Gestión</title>
-<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script>
+// Debug: track loading stages
+console.log('[BEMBE] Loading started');
+window.addEventListener('load', () => console.log('[BEMBE] Window load event fired'));
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4" onload="console.log('[BEMBE] Tailwind loaded')" onerror="console.error('[BEMBE] Tailwind failed to load')"></script>
 <style>
 @keyframes flyInStar { from { opacity:0; transform:scale(0) translateY(20px); } to { opacity:1; transform:scale(1) translateY(0); } }
 @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
@@ -377,6 +382,7 @@ requestAnimationFrame(animate);
 }
 // ==================== INTRO ====================
 function initIntro() {
+console.log('[BEMBE] initIntro called');
 const starsDiv = document.getElementById('introStars');
 for (let i = 0; i < 120; i++) {
 const el = document.createElement('div');
@@ -390,18 +396,22 @@ starsDiv.appendChild(el);
 let progress = 0;
 const bar = document.getElementById('introBar');
 const interval = setInterval(() => {
-progress = Math.min(progress + 1.5, 100);
+progress = Math.min(progress + 3, 100);
 bar.style.width = progress + '%';
-}, 50);
+}, 30);
+// Reduced intro time from 4.8s to 2s
 setTimeout(() => {
+console.log('[BEMBE] Hiding intro');
 document.getElementById('introScreen').style.opacity = '0';
-}, 3800);
+}, 1500);
 setTimeout(() => {
 clearInterval(interval);
+console.log('[BEMBE] Showing main app');
 document.getElementById('introScreen').style.display = 'none';
 document.getElementById('mainApp').classList.remove('hidden');
+console.log('[BEMBE] Calling initApp');
 initApp();
-}, 4800);
+}, 2000);
 }
 // ==================== CALENDAR ====================
 let calDate = new Date();
@@ -2732,7 +2742,10 @@ function changeLanguage(lang) {
 
 // ==================== INIT ====================
 function initApp() {
+console.log('[BEMBE] initApp called');
+try {
   loadData();
+  console.log('[BEMBE] Data loaded, students:', appData.students.length);
 
   // Load saved language preference
   try {
@@ -2740,11 +2753,13 @@ function initApp() {
     if (savedLang && translations[savedLang]) {
       currentLanguage = savedLang;
     }
-  } catch(e) { console.error('Error loading language:', e); }
+  } catch(e) { console.error('[BEMBE] Error loading language:', e); }
 
+  console.log('[BEMBE] Rendering all...');
   renderAll();
   updateGridLayout();
   window.addEventListener('resize', updateGridLayout);
+  console.log('[BEMBE] App initialized successfully');
 
   // Online/Offline detection
   window.addEventListener('online', () => {
