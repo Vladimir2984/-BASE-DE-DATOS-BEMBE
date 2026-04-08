@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo   BEMBE v3.1.2 - Instalador con Auto-Update
+echo   BEMBE v3.1.5 - Instalador con Auto-Update
 echo   Se actualiza automaticamente!
 echo ========================================
 echo.
@@ -48,7 +48,7 @@ start "" "BEMBE-Launcher.html"
 
 echo.
 echo ========================================
-echo   BEMBE v3.1.2 - INSTALADO
+echo   BEMBE v3.1.5 - INSTALADO
 echo ========================================
 echo.
 echo ✨ CARACTERISTICA ESPECIAL:

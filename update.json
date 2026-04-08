@@ -1,14 +1,14 @@
 {
-  "version": "3.1.4",
-  "releaseDate": "2026-04-06",
+  "version": "3.1.5",
+  "releaseDate": "2026-04-08",
   "minVersion": "3.0.0",
-  "description": "Escuela Bembe 2026 + Horario Sábado/Domingo",
+  "description": "BEMBE 2026 - Sistema de Auto-Actualización Mejorado",
   "changelog": [
-    "Logo ESCUELA BEMBE 2026 en esquina superior izquierda",
-    "Sábado: 10:00 - 12:00 Práctica Libre",
-    "Domingo: 18:00 - 20:00 Clase Especial",
-    "Mejoras en traducciones ES/RU/EN",
-    "Sistema de actualización automática implementado"
+    "Lanzador inteligente: descarga automática del código más reciente al iniciar",
+    "Modo Offline robusto: usa caché local si no hay internet",
+    "Validación de integridad mejorada",
+    "Interfaz de carga modernizada con fondo animado",
+    "Sincronización optimizada con el repositorio de GitHub"
   ],
   "files": {
     "CODIGO OK.html": {
@@ -19,5 +19,5 @@
     }
   },
   "breaking": false,
-  "forceUpdate": false
+  "forceUpdate": true
 }

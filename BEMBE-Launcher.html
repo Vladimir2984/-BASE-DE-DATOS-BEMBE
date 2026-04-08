@@ -1,119 +1,161 @@
-<!-- BEMBE Auto-Updater Launcher v3.1.3 -->
+<!-- BEMBE Auto-Updater Launcher v3.1.5 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>BEMBE - Actualizando...</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BEMBE - Iniciando Sistema...</title>
 <style>
-body { margin:0; font-family:'Segoe UI',system-ui,sans-serif; background:radial-gradient(ellipse at center,#0c2248 0%,#020a18 70%); color:#e2e8f0; display:flex; align-items:center; justify-content:center; min-height:100vh; }
-.container { text-align:center; max-width:600px; padding:40px; }
-h1 { font-size:2.5rem; background:linear-gradient(135deg,#fbbf24,#f59e0b,#fbbf24); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:20px; }
-.progress { width:100%; height:8px; background:rgba(255,255,255,0.1); border-radius:9999px; overflow:hidden; margin:20px 0; }
-.progress-bar { height:100%; width:0%; background:linear-gradient(90deg,#3b82f6,#fbbf24); border-radius:9999px; transition:width 0.3s; }
-.status { color:rgba(147,197,253,0.7); font-size:0.875rem; margin:10px 0; }
+body { margin:0; font-family:'Segoe UI',system-ui,sans-serif; background:radial-gradient(ellipse at center,#0c2248 0%,#020a18 70%); color:#e2e8f0; display:flex; align-items:center; justify-content:center; min-height:100vh; overflow:hidden; }
+.container { text-align:center; max-width:600px; padding:40px; position:relative; z-index:10; }
+h1 { font-size:3rem; font-weight:800; background:linear-gradient(135deg,#fbbf24,#f59e0b,#fbbf24); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:10px; text-shadow: 0 0 30px rgba(251,191,36,0.3); }
+.version-tag { font-size:0.7rem; color:rgba(251,191,36,0.6); letter-spacing:2px; text-transform:uppercase; margin-bottom:30px; }
+.progress { width:240px; height:4px; background:rgba(255,255,255,0.1); border-radius:9999px; overflow:hidden; margin:25px auto; }
+.progress-bar { height:100%; width:0%; background:linear-gradient(90deg,#3b82f6,#fbbf24); border-radius:9999px; transition:width 0.4s cubic-bezier(0.1, 0.7, 1.0, 0.1); box-shadow: 0 0 10px rgba(251,191,36,0.5); }
+.status { color:rgba(147,197,253,0.8); font-size:0.9rem; margin:10px 0; font-weight:500; min-height:1.2em; }
+.message { font-size:0.75rem; color:rgba(147,197,253,0.4); margin-top:15px; font-style:italic; }
 .error { color:#f87171; }
 .success { color:#10b981; }
+#bg-stars { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1; pointer-events:none; }
 </style>
 </head>
 <body>
+<canvas id="bg-stars"></canvas>
 <div class="container">
-<h1>✦ BEMBE ✦</h1>
-<div id="status" class="status">Verificando actualización...</div>
-<div class="progress"><div id="progress" class="progress-bar"></div></div>
-<div id="message" style="font-size:0.75rem;color:rgba(147,197,253,0.5);margin-top:20px;"></div>
+    <h1>✦ BEMBE ✦</h1>
+    <div class="version-tag">Sistema de Gestión v2026</div>
+    <div id="status" class="status">Iniciando...</div>
+    <div class="progress"><div id="progress" class="progress-bar"></div></div>
+    <div id="message" class="message"></div>
 </div>
 
 <script>
-const GITHUB_RAW = 'https://raw.githubusercontent.com/Vladimir2984/-BASE-DE-DATOS-BEMBE/master/CODIGO%20OK.html';
-const VERSION_KEY = 'bembe_last_update_check';
+const GITHUB_BASE = 'https://raw.githubusercontent.com/Vladimir2984/-BASE-DE-DATOS-BEMBE/master';
+const GITHUB_RAW = `${GITHUB_BASE}/CODIGO%20OK.html`;
+const UPDATE_JSON = `${GITHUB_BASE}/update.json`;
 const CACHE_KEY = 'bembe_cached_app';
-const CACHE_DATE_KEY = 'bembe_cache_date';
+const VERSION_KEY = 'bembe_app_version';
+const LAST_CHECK_KEY = 'bembe_last_update_check';
 
-async function updateProgress(percent, status, message) {
-  document.getElementById('progress').style.width = percent + '%';
-  document.getElementById('status').textContent = status;
-  if (message) document.getElementById('message').textContent = message;
-  console.log(`[${percent}%] ${status} - ${message || ''}`);
+function updateUI(percent, status, message, isError = false) {
+    const bar = document.getElementById('progress');
+    const statusEl = document.getElementById('status');
+    const messageEl = document.getElementById('message');
+    
+    bar.style.width = percent + '%';
+    statusEl.textContent = status;
+    if (isError) statusEl.classList.add('error');
+    if (message) messageEl.textContent = message;
 }
 
 async function openApp(htmlContent, source) {
-  console.log(`Opening app from: ${source}`);
-  const blob = new Blob([htmlContent], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  window.location.href = url;
-}
-
-function openLocalFile() {
-  console.log('Falling back to local file');
-  window.location.href = 'CODIGO OK.html';
+    console.log(`Opening app from: ${source}`);
+    // Guardar en caché si viene de GitHub
+    if (source === 'github') {
+        localStorage.setItem(CACHE_KEY, htmlContent);
+        localStorage.setItem(LAST_CHECK_KEY, Date.now().toString());
+    }
+    
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.location.replace(url);
 }
 
 async function checkAndUpdate() {
-  try {
-    await updateProgress(10, 'Conectando con GitHub...', 'Verificando última versión');
+    try {
+        updateUI(15, 'Buscando actualizaciones...', 'Conectando con el servidor central');
+        
+        // 1. Intentar obtener update.json para ver si hay nueva versión
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        
+        let updateData = null;
+        try {
+            const resJson = await fetch(UPDATE_JSON, { cache: 'no-cache', signal: controller.signal });
+            if (resJson.ok) updateData = await resJson.json();
+        } catch (e) { console.warn('No se pudo obtener update.json, intentando descarga directa'); }
+        clearTimeout(timeoutId);
 
-    // Fetch with timeout to avoid hanging
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+        // 2. Descargar el código principal
+        updateUI(40, 'Descargando última versión...', 'Sincronizando base de datos y componentes');
+        
+        const resCode = await fetch(GITHUB_RAW, { cache: 'no-cache' });
+        if (!resCode.ok) throw new Error('Error al descargar el código principal');
+        
+        const latestCode = await resCode.text();
+        
+        // 3. Validar integridad
+        updateUI(75, 'Verificando integridad...', 'Validando firma del sistema');
+        if (!latestCode.includes('BEMBE') || !latestCode.includes('appData')) {
+            throw new Error('El archivo descargado no es una versión válida de BEMBE');
+        }
 
-    const response = await fetch(GITHUB_RAW, {
-      method: 'GET',
-      cache: 'no-cache',
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
+        // 4. Actualizar versión local si tenemos el JSON
+        if (updateData && updateData.version) {
+            localStorage.setItem(VERSION_KEY, updateData.version);
+        }
 
-    if (!response.ok) {
-      throw new Error(`GitHub responded with ${response.status}`);
+        updateUI(100, '¡Sistema actualizado!', 'Iniciando aplicación...');
+        setTimeout(() => openApp(latestCode, 'github'), 600);
+
+    } catch (error) {
+        console.error('Update error:', error);
+        
+        // Intento de recuperación: usar caché
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached && cached.includes('BEMBE')) {
+            updateUI(100, 'Iniciando (Modo Offline)', 'No se pudo conectar, usando versión guardada');
+            setTimeout(() => openApp(cached, 'cache'), 1500);
+        } else {
+            // Último recurso: archivo local
+            updateUI(100, 'Iniciando versión local', 'Sin conexión y sin caché disponible');
+            setTimeout(() => { window.location.replace('CODIGO OK.html'); }, 2000);
+        }
     }
-
-    await updateProgress(30, 'Descargando última versión...', 'Esto puede tomar unos segundos');
-
-    const latestCode = await response.text();
-
-    await updateProgress(60, 'Verificando integridad...', 'Comprobando que el archivo es válido');
-
-    // Verify it's a valid BEMBE app
-    if (!latestCode.includes('BEMBE')) {
-      throw new Error('Archivo descargado no es válido: no contiene BEMBE');
-    }
-
-    await updateProgress(80, 'Guardando actualización...', 'Preparando para abrir');
-
-    // Save to localStorage
-    localStorage.setItem(CACHE_KEY, latestCode);
-    localStorage.setItem(VERSION_KEY, Date.now().toString());
-    localStorage.setItem(CACHE_DATE_KEY, new Date().toISOString());
-
-    await updateProgress(100, '¡Actualización completada!', 'Abriendo aplicación...');
-
-    // Open the cached version
-    setTimeout(() => openApp(latestCode, 'github'), 500);
-
-  } catch (error) {
-    console.error('Update error:', error);
-    document.getElementById('status').className = 'status';
-
-    // If update fails, try to open cached version
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached && cached.includes('BEMBE')) {
-      await updateProgress(100, '⚠️ Usando versión en caché', 'No se pudo conectar con GitHub');
-      document.getElementById('message').textContent = `Error: ${error.message}`;
-      setTimeout(() => openApp(cached, 'cache'), 1500);
-    } else {
-      // If no cache, redirect to local file
-      document.getElementById('status').className = 'status error';
-      document.getElementById('status').textContent = '⚠️ No se pudo actualizar';
-      document.getElementById('message').textContent = `Error: ${error.message}. Abriendo versión local en 3 segundos...`;
-
-      setTimeout(() => openLocalFile(), 3000);
-    }
-  }
 }
 
-// Start update process
+// Fondo de estrellas animado
+function initStars() {
+    const canvas = document.getElementById('bg-stars');
+    const ctx = canvas.getContext('2d');
+    let w, h, stars = [];
+
+    function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+
+    for(let i=0; i<150; i++) {
+        stars.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            size: Math.random() * 1.5,
+            speed: Math.random() * 0.5 + 0.1
+        });
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = '#fbbf24';
+        stars.forEach(s => {
+            ctx.globalAlpha = Math.random() * 0.5 + 0.5;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+            ctx.fill();
+            s.y += s.speed;
+            if(s.y > h) s.y = 0;
+        });
+        requestAnimationFrame(animate);
+    }
+    animate();
+}
+
 window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(checkAndUpdate, 300);
+    initStars();
+    setTimeout(checkAndUpdate, 500);
 });
 </script>
 </body>
