@@ -1,6 +1,45 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script>
+// ==================== BEMBE AUTO-UPDATER ====================
+window.BEMBE_VERSION = "3.2.0";
+window.__is_running_ota = window.__is_running_ota || false;
+
+if (!window.__is_running_ota) {
+    const otaCode = localStorage.getItem('bembe_ota_code');
+    if (otaCode && otaCode.includes('✦ BEMBE ✦')) {
+        window.stop(); 
+        setTimeout(() => {
+            const codeToRun = otaCode.replace('<head>', '<head><script>window.__is_running_ota = true;<\\/script>');
+            document.open();
+            document.write(codeToRun);
+            document.close();
+        }, 10);
+    }
+}
+
+async function checkForUpdates() {
+    if (window.__is_running_ota) return; // Si ya iniciamos desde OTA, podemos chequear igual, pero para simplificar lo maneja el original
+    const UPDATE_URL = "https://raw.githubusercontent.com/BEMBE-ADMIN/ESCUELA-BEMBE/main/CODIGO_OK.html";
+    try {
+        const res = await fetch(UPDATE_URL, { cache: 'no-store' });
+        if (res.ok) {
+            const newCode = await res.text();
+            if (newCode.includes('✦ BEMBE ✦') && newCode.includes('window.BEMBE_VERSION')) {
+                const currentCode = localStorage.getItem('bembe_ota_code') || "";
+                if (currentCode.length !== newCode.length || !currentCode.includes('window.BEMBE_VERSION')) {
+                    localStorage.setItem('bembe_ota_code', newCode);
+                    console.log("Nueva versión descargada en segundo plano.");
+                    showToast("✨ ¡Nueva versión de BEMBE instalada! Recargando...");
+                    setTimeout(() => location.reload(), 2000);
+                }
+            }
+        }
+    } catch(e) { console.log("OTA check fallido:", e); }
+}
+document.addEventListener("DOMContentLoaded", () => setTimeout(checkForUpdates, 4000));
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>✦ BEMBE ✦ - Sistema de Gestión</title>
@@ -257,8 +296,6 @@ flex-shrink: 0;
 <button class="btn-modern btn-gold" onclick="handleExport()" data-i18n="exportDB">📥 Exportar BD</button>
 <button class="btn-modern btn-gold" onclick="handleImport()" data-i18n="importDB">📤 Importar BD</button>
 <button class="btn-modern btn-blue" onclick="restoreAutoBackup()" data-i18n="restoreBackup">💾 Restaurar Respaldo</button>
-<button class="btn-modern btn-cyan" onclick="forceUpdate()">🔄 Forzar Actualización</button>
-<button class="btn-modern btn-red" onclick="handleLogout()">🚪 Cerrar Sesión Nube</button>
 </div>
 </div>
 </div>
@@ -427,6 +464,10 @@ html += `<button onclick="openAttendance(${d},${month},${year})" style="padding:
 grid.innerHTML = html;
 }
 // ==================== RENDER FUNCTIONS ====================
+function normalizeStr(str) {
+return (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 function renderTeachers() {
 const container = document.getElementById('teachersList');
 if (!container) return;
@@ -444,10 +485,10 @@ container.innerHTML = appData.teachers.map(t => `
 function renderStudentList() {
 const container = document.getElementById('studentListContainer');
 if (!container) return;
-const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+const q = normalizeStr(document.getElementById('searchInput')?.value);
 const filtered = appData.students.filter(s => {
-const full = `${s.surname} ${s.name}`.toLowerCase();
-const full2 = `${s.name} ${s.surname}`.toLowerCase();
+const full = normalizeStr(`${s.surname} ${s.name}`);
+const full2 = normalizeStr(`${s.name} ${s.surname}`);
 return full.includes(q) || full2.includes(q);
 });
 if (filtered.length === 0) {
@@ -565,8 +606,8 @@ const register = document.getElementById('qfRegister').value || todayStr();
 if (!name || !surname) { alert('Nombre y apellido requeridos'); return; }
 // Check for duplicates
 const exists = appData.students.some(s =>
-s.name.toLowerCase() === name.toLowerCase() &&
-s.surname.toLowerCase() === surname.toLowerCase()
+normalizeStr(s.name) === normalizeStr(name) &&
+normalizeStr(s.surname) === normalizeStr(surname)
 );
 if (exists) {
 if (!confirm(`Ya existe un alumno "${surname} ${name}". ¿Desea agregar otro con el mismo nombre?`)) return;
@@ -881,9 +922,9 @@ if (!container || !manageId) return;
 const s = appData.students.find(st => st.id === manageId);
 if (!s) { container.innerHTML = '<tr><td colspan="4" style="text-align:center;color:rgba(147,197,253,0.3);padding:16px;">Sin historial.</td></tr>'; return; }
 const hist = appData.history.filter(h => {
-const hn = h.studentName.toLowerCase().replace(/\s+/g,'');
-const sn1 = `${s.surname}${s.name}`.toLowerCase().replace(/\s+/g,'');
-const sn2 = `${s.name}${s.surname}`.toLowerCase().replace(/\s+/g,'');
+const hn = normalizeStr(h.studentName).replace(/\s+/g,'');
+const sn1 = normalizeStr(`${s.surname}${s.name}`).replace(/\s+/g,'');
+const sn2 = normalizeStr(`${s.name}${s.surname}`).replace(/\s+/g,'');
 return hn.includes(sn1) || hn.includes(sn2) || sn1.includes(hn) || sn2.includes(hn);
 }).reverse();
 if (hist.length === 0) {
@@ -1172,10 +1213,15 @@ function createExportPackage(data, password = null) {
   return exportData;
 }
 
-// Validate and decrypt import package - COMPATIBLE CON CUALQUIER VERSIÓN
+// Validate and decrypt import package
 function validateImportPackage(imported, password = null) {
+  // Accept files with or without version (old files are valid too)
+  // Only reject if it's completely empty or not a proper object
+  if (!imported || typeof imported !== 'object') {
+    return { valid: false, error: 'Archivo JSON inválido o vacío' };
+  }
+
   let data;
-  let isOldFormat = false;
 
   // Decrypt if necessary
   if (imported.encrypted) {
@@ -1187,22 +1233,16 @@ function validateImportPackage(imported, password = null) {
     } catch (err) {
       return { valid: false, error: err.message };
     }
-  } else if (imported.data) {
-    // Formato nuevo con versión
-    data = imported.data;
-  } else if (imported.students || importado.teachers) {
-    // Formato antiguo - datos directamente en el raíz
-    data = imported;
-    isOldFormat = true;
   } else {
-    return { valid: false, error: 'Archivo JSON inválido o no compatible' };
+    // Support both new format (with data field) and old format (direct data)
+    data = imported.data || imported;
   }
 
-  // Validate checksum (only if available - old formats may not have it)
+  // Validate checksum if present
   if (imported.checksum && generateChecksum(data) !== imported.checksum) {
     return { valid: false, error: 'El archivo está corrupto o ha sido modificado' };
   }
-  
+
   // Sanitize all data
   const sanitizedData = sanitizeAppData(data);
 
@@ -1212,55 +1252,17 @@ function validateImportPackage(imported, password = null) {
     return validation;
   }
 
-  return { 
-    valid: true, 
-    data: sanitizedData, 
-    summary: validation.summary, 
-    metadata: imported.metadata || {},
-    isOldFormat: isOldFormat,
-    version: imported.version || 'antigua'
-  };
+  return { valid: true, data: sanitizedData, summary: validation.summary, metadata: imported.metadata };
 }
 
 // ==================== EXPORT / IMPORT ====================
 // Enhanced Export - Includes ALL data with complete integrity verification
 function handleExport() {
   try {
-    // Collect ALL data including attendance records
-    const fullExport = {
-      version: '3.1.0',
-      exportDate: new Date().toISOString(),
-      platform: 'BEMBE-PC',
-      checksum: generateChecksum(appData),
-      data: {
-        students: appData.students || [],
-        teachers: appData.teachers || [],
-        renters: appData.renters || [],
-        debtRecords: appData.debtRecords || [],
-        history: appData.history || [],
-        schedule: appData.schedule || {},
-        prices: appData.prices || [],
-        // Include attendance data
-        attendance: collectAllAttendanceData()
-      },
-      metadata: {
-        recordCount: {
-          students: (appData.students || []).length,
-          teachers: (appData.teachers || []).length,
-          renters: (appData.renters || []).length,
-          debtRecords: (appData.debtRecords || []).length,
-          history: (appData.history || []).length,
-          schedule: Object.keys(appData.schedule || {}).length
-        },
-        dataIntegrity: {
-          hasAllFields: true,
-          checksumVerified: true,
-          compatibleWith: ['PC', 'Android', 'iOS']
-        }
-      }
-    };
-
-    const blob = new Blob([JSON.stringify(fullExport, null, 2)], {type:'application/json'});
+    // Create export package with metadata and checksum
+    const exportPackage = createExportPackage(appData);
+    
+    const blob = new Blob([JSON.stringify(exportPackage, null, 2)], {type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -1270,52 +1272,24 @@ function handleExport() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-
-    showToast('📥 Datos exportados correctamente con TODOS los registros y verificación de integridad');
-
+    
+    showToast('📥 Datos exportados correctamente con verificación de integridad');
+    
     // Auto-save backup to localStorage
     localStorage.setItem('bembe_last_export', JSON.stringify({
       timestamp: Date.now(),
-      checksum: fullExport.checksum,
-      dataSummary: fullExport.metadata.recordCount
+      checksum: exportPackage.checksum,
+      dataSummary: {
+        students: appData.students.length,
+        teachers: appData.teachers.length,
+        renters: appData.renters.length,
+        debtRecords: appData.debtRecords.length,
+        history: appData.history.length
+      }
     }));
   } catch(err) {
     console.error('Export error:', err);
     showToast('❌ Error al exportar: ' + err.message);
-  }
-}
-
-// Collect all attendance data from localStorage
-function collectAllAttendanceData() {
-  const attendance = {};
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key.startsWith('att_')) {
-        try {
-          attendance[key] = JSON.parse(localStorage.getItem(key) || '{}');
-        } catch(e) {
-          console.warn('Failed to parse attendance for key:', key);
-        }
-      }
-    }
-  } catch(e) {
-    console.error('Error collecting attendance:', e);
-  }
-  return attendance;
-}
-
-// Restore all attendance data from export
-function restoreAttendanceData(attendance) {
-  if (!attendance || typeof attendance !== 'object') return;
-  try {
-    Object.keys(attendance).forEach(key => {
-      if (key.startsWith('att_')) {
-        localStorage.setItem(key, JSON.stringify(attendance[key]));
-      }
-    });
-  } catch(e) {
-    console.error('Error restoring attendance:', e);
   }
 }
 function handleImport() {
@@ -1379,70 +1353,48 @@ function rotateOldBackups() {
 }
 
 function validateImportData(imported) {
-// Validate required fields exist - FLEXIBLE con formatos antiguos
+// Validate required fields exist
 const requiredFields = ['students', 'teachers', 'renters', 'debtRecords', 'history', 'schedule', 'prices'];
 const missingFields = requiredFields.filter(field => !(field in imported));
-
-// Si faltan campos, los agregamos con valores por defecto en lugar de rechazar
 if (missingFields.length > 0) {
-  console.log('Formato antiguo detectado, agregando campos faltantes:', missingFields);
-  missingFields.forEach(field => {
-    if (field === 'schedule') imported[field] = {};
-    else if (Array.isArray(imported.students)) imported[field] = [];
-    else imported[field] = [];
-  });
+return { valid: false, error: `Campos faltantes: ${missingFields.join(', ')}` };
 }
+// Validate data types
+if (!Array.isArray(imported.students)) return { valid: false, error: 'students debe ser un array' };
+if (!Array.isArray(imported.teachers)) return { valid: false, error: 'teachers debe ser un array' };
+if (!Array.isArray(imported.renters)) return { valid: false, error: 'renters debe ser un array' };
+if (!Array.isArray(imported.debtRecords)) return { valid: false, error: 'debtRecords debe ser un array' };
+if (!Array.isArray(imported.history)) return { valid: false, error: 'history debe ser un array' };
+if (typeof imported.schedule !== 'object') return { valid: false, error: 'schedule debe ser un objeto' };
+if (!Array.isArray(imported.prices)) return { valid: false, error: 'prices debe ser un array' };
 
-// Validate data types - convertir si es necesario
-if (!Array.isArray(imported.students)) {
-  imported.students = Array.isArray(imported.students) ? imported.students : [];
-}
-if (!Array.isArray(imported.teachers)) {
-  imported.teachers = Array.isArray(imported.teachers) ? imported.teachers : [];
-}
-if (!Array.isArray(imported.renters)) {
-  imported.renters = Array.isArray(imported.renters) ? imported.renters : [];
-}
-if (!Array.isArray(imported.debtRecords)) {
-  imported.debtRecords = Array.isArray(imported.debtRecords) ? imported.debtRecords : [];
-}
-if (!Array.isArray(imported.history)) {
-  imported.history = Array.isArray(imported.history) ? imported.history : [];
-}
-if (typeof imported.schedule !== 'object' || imported.schedule === null) {
-  imported.schedule = {};
-}
-if (!Array.isArray(imported.prices)) {
-  imported.prices = [];
-}
-
-// Validate and sanitize student structure - más tolerante
+// Validate and sanitize student structure
 for (let i = 0; i < imported.students.length; i++) {
-  const s = imported.students[i];
-  // Solo validar que tenga al menos un identificador
-  if (!s.id) {
-    s.id = 'student_' + i + '_' + Date.now();
-  }
-  if (!s.surname) s.surname = 'Sin apellido';
-  if (!s.name) s.name = 'Sin nombre';
-  
-  // Validate field lengths to prevent abuse
-  if (s.surname.length > 100) s.surname = s.surname.substring(0, 100);
-  if (s.name.length > 100) s.name = s.name.substring(0, 100);
-  if (s.phone && s.phone.length > 20) s.phone = s.phone.substring(0, 20);
+const s = imported.students[i];
+if (!s.id || !s.surname || !s.name) {
+return { valid: false, error: `Estudiante ${i+1} inválido: falta id, surname o name` };
+}
+// Validate field lengths to prevent abuse
+if (s.surname.length > 100 || s.name.length > 100) {
+  return { valid: false, error: `Estudiante ${i+1}: nombre o apellido demasiado largo (máx 100 caracteres)` };
+}
+if (s.phone && s.phone.length > 20) {
+  return { valid: false, error: `Estudiante ${i+1}: número de teléfono demasiado largo` };
+}
 }
 
-// Validate teachers - más tolerante
+// Validate teachers
 for (let i = 0; i < imported.teachers.length; i++) {
   const t = imported.teachers[i];
-  if (!t.id) t.id = 'teacher_' + i + '_' + Date.now();
-  if (t.name && t.name.length > 100) t.name = t.name.substring(0, 100);
+  if (t.name && t.name.length > 100) {
+    return { valid: false, error: `Profesor ${i+1}: nombre demasiado largo` };
+  }
 }
 
 // Check file size estimate
 const estimatedSize = JSON.stringify(imported).length;
-if (estimatedSize > 10 * 1024 * 1024) { // 10MB limit
-return { valid: false, error: 'Archivo demasiado grande (>10MB)' };
+if (estimatedSize > 5 * 1024 * 1024) { // 5MB limit
+return { valid: false, error: 'Archivo demasiado grande (>5MB)' };
 }
 return { valid: true, summary: {
 students: imported.students.length,
@@ -1649,14 +1601,8 @@ confirmPromise.then(() => {
 // User confirmed - apply import with sanitized data
 appData = validation.data;
 saveData();
-
-// Restore attendance data if available
-if (validation.data && validation.data.attendance) {
-  restoreAttendanceData(validation.data.attendance);
-}
-
 renderAll();
-showToast('✅ Datos importados correctamente con TODOS los registros verificados');
+showToast('✅ Datos importados correctamente con verificación de integridad');
 
 // Save import history with metadata
 const importHistory = JSON.parse(localStorage.getItem('bembe_import_history') || '[]');
@@ -1665,9 +1611,7 @@ date: Date.now(),
 file: file.name,
 summary: validation.summary,
 checksum: validation.data ? generateChecksum(validation.data) : 'N/A',
-metadata: validation.metadata || {},
-platform: 'PC',
-version: validation.data?.version || '3.1.0'
+metadata: validation.metadata || {}
 });
 if (importHistory.length > 10) importHistory.pop();
 localStorage.setItem('bembe_import_history', JSON.stringify(importHistory));
@@ -2124,7 +2068,7 @@ const val = surnameInput.value.trim();
 // Try to find matching student
 const s = appData.students.find(st => {
 const full = `${st.surname} ${st.name}`;
-return full === val || st.surname.toLowerCase() === val.toLowerCase();
+return full === val || normalizeStr(st.surname) === normalizeStr(val);
 });
 if (s) {
 const nameInput = document.getElementById('sfName');

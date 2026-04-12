@@ -1,6 +1,45 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script>
+// ==================== BEMBE AUTO-UPDATER ====================
+window.BEMBE_VERSION = "3.2.0";
+window.__is_running_ota = window.__is_running_ota || false;
+
+if (!window.__is_running_ota) {
+    const otaCode = localStorage.getItem('bembe_ota_code');
+    if (otaCode && otaCode.includes('✦ BEMBE ✦')) {
+        window.stop(); 
+        setTimeout(() => {
+            const codeToRun = otaCode.replace('<head>', '<head><script>window.__is_running_ota = true;<\\/script>');
+            document.open();
+            document.write(codeToRun);
+            document.close();
+        }, 10);
+    }
+}
+
+async function checkForUpdates() {
+    if (window.__is_running_ota) return; // Si ya iniciamos desde OTA, podemos chequear igual, pero para simplificar lo maneja el original
+    const UPDATE_URL = "https://raw.githubusercontent.com/BEMBE-ADMIN/ESCUELA-BEMBE/main/CODIGO_OK.html";
+    try {
+        const res = await fetch(UPDATE_URL, { cache: 'no-store' });
+        if (res.ok) {
+            const newCode = await res.text();
+            if (newCode.includes('✦ BEMBE ✦') && newCode.includes('window.BEMBE_VERSION')) {
+                const currentCode = localStorage.getItem('bembe_ota_code') || "";
+                if (currentCode.length !== newCode.length || !currentCode.includes('window.BEMBE_VERSION')) {
+                    localStorage.setItem('bembe_ota_code', newCode);
+                    console.log("Nueva versión descargada en segundo plano.");
+                    showToast("✨ ¡Nueva versión de BEMBE instalada! Recargando...");
+                    setTimeout(() => location.reload(), 2000);
+                }
+            }
+        }
+    } catch(e) { console.log("OTA check fallido:", e); }
+}
+document.addEventListener("DOMContentLoaded", () => setTimeout(checkForUpdates, 4000));
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>✦ BEMBE ✦ - Sistema de Gestión</title>
@@ -155,8 +194,6 @@ flex-shrink: 0;
 </head>
 <body>
 <canvas id="starCanvas" style="position:fixed;inset:0;z-index:0;"></canvas>
-<!-- LOGO BEMBE (Miniatura superior izquierda) -->
-<img src="INCONO-BEMBE.png" alt="BEMBE Logo" style="position:fixed;top:12px;left:16px;z-index:10001;width:48px;height:48px;border-radius:8px;object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,0.5);border:2px solid rgba(251,191,36,0.3);" onerror="this.style.display='none'">
 <!-- LANGUAGE SELECTOR -->
 <div id="langSelector" style="position:fixed;top:16px;right:16px;z-index:10000;display:flex;gap:8px;">
   <button onclick="changeLanguage('es')" style="width:32px;height:32px;border-radius:50%;background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);cursor:pointer;font-weight:700;">ES</button>
@@ -178,9 +215,8 @@ flex-shrink: 0;
 <div id="mainApp" class="hidden" style="position:relative;z-index:10;padding:16px;max-width:1440px;margin:0 auto;animation:fadeIn 1s ease-out;">
 <!-- TITLE -->
 <div style="text-align:center;margin-bottom:32px;">
-  <h1 style="display:inline-block;font-size:1.75rem;font-weight:800;background:linear-gradient(135deg,#fbbf24,#f59e0b,#fbbf24);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-transform:uppercase;letter-spacing:2px;padding-bottom:12px;border-bottom:2px solid rgba(251,191,36,0.5);" id="appTitle">✦ Escuela Bembe 2026 ✦</h1>
+  <h1 style="display:inline-block;font-size:1.75rem;font-weight:800;background:linear-gradient(135deg,#fbbf24,#f59e0b,#fbbf24);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-transform:uppercase;letter-spacing:2px;padding-bottom:12px;border-bottom:2px solid rgba(251,191,36,0.5);" id="appTitle">✦ Sistema Bembe ✦</h1>
   <p style="color:rgba(147,197,253,0.5);font-size:0.875rem;margin-top:8px;letter-spacing:2px;" id="appSubtitle">Gestión de Escuela de Danza</p>
-  <p id="syncIndicator" style="color:rgba(107,114,128,0.6);font-size:0.75rem;margin-top:4px;">💾 Modo Local</p>
 </div>
 <!-- GRID -->
 <div style="display:grid;grid-template-columns:repeat(1,1fr);gap:16px;" id="mainGrid">
@@ -251,14 +287,9 @@ flex-shrink: 0;
 <div style="color:#fbbf24;text-align:center;font-weight:700;margin-bottom:16px;font-size:0.875rem;" data-i18n="configuration">⚙️ Configuración</div>
 <div style="display:flex;flex-direction:column;gap:8px;flex:1;">
 <button class="btn-modern btn-gold" onclick="openModal('prices')" data-i18n="prices">💲 Precios</button>
-<button class="btn-modern btn-green" onclick="handleSyncManual()">🔄 Sincronizar con Nube</button>
-<button class="btn-modern btn-blue" onclick="handleCloudLogin()">🔐 Iniciar Sesión Nube</button>
-<button class="btn-modern btn-cyan" onclick="handleCloudRegister()">📝 Crear Cuenta Nube</button>
 <button class="btn-modern btn-gold" onclick="handleExport()" data-i18n="exportDB">📥 Exportar BD</button>
 <button class="btn-modern btn-gold" onclick="handleImport()" data-i18n="importDB">📤 Importar BD</button>
 <button class="btn-modern btn-blue" onclick="restoreAutoBackup()" data-i18n="restoreBackup">💾 Restaurar Respaldo</button>
-<button class="btn-modern btn-cyan" onclick="forceUpdate()">🔄 Forzar Actualización</button>
-<button class="btn-modern btn-red" onclick="handleLogout()">🚪 Cerrar Sesión Nube</button>
 </div>
 </div>
 </div>
@@ -427,6 +458,10 @@ html += `<button onclick="openAttendance(${d},${month},${year})" style="padding:
 grid.innerHTML = html;
 }
 // ==================== RENDER FUNCTIONS ====================
+function normalizeStr(str) {
+return (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 function renderTeachers() {
 const container = document.getElementById('teachersList');
 if (!container) return;
@@ -444,10 +479,10 @@ container.innerHTML = appData.teachers.map(t => `
 function renderStudentList() {
 const container = document.getElementById('studentListContainer');
 if (!container) return;
-const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+const q = normalizeStr(document.getElementById('searchInput')?.value);
 const filtered = appData.students.filter(s => {
-const full = `${s.surname} ${s.name}`.toLowerCase();
-const full2 = `${s.name} ${s.surname}`.toLowerCase();
+const full = normalizeStr(`${s.surname} ${s.name}`);
+const full2 = normalizeStr(`${s.name} ${s.surname}`);
 return full.includes(q) || full2.includes(q);
 });
 if (filtered.length === 0) {
@@ -565,8 +600,8 @@ const register = document.getElementById('qfRegister').value || todayStr();
 if (!name || !surname) { alert('Nombre y apellido requeridos'); return; }
 // Check for duplicates
 const exists = appData.students.some(s =>
-s.name.toLowerCase() === name.toLowerCase() &&
-s.surname.toLowerCase() === surname.toLowerCase()
+normalizeStr(s.name) === normalizeStr(name) &&
+normalizeStr(s.surname) === normalizeStr(surname)
 );
 if (exists) {
 if (!confirm(`Ya existe un alumno "${surname} ${name}". ¿Desea agregar otro con el mismo nombre?`)) return;
@@ -881,9 +916,9 @@ if (!container || !manageId) return;
 const s = appData.students.find(st => st.id === manageId);
 if (!s) { container.innerHTML = '<tr><td colspan="4" style="text-align:center;color:rgba(147,197,253,0.3);padding:16px;">Sin historial.</td></tr>'; return; }
 const hist = appData.history.filter(h => {
-const hn = h.studentName.toLowerCase().replace(/\s+/g,'');
-const sn1 = `${s.surname}${s.name}`.toLowerCase().replace(/\s+/g,'');
-const sn2 = `${s.name}${s.surname}`.toLowerCase().replace(/\s+/g,'');
+const hn = normalizeStr(h.studentName).replace(/\s+/g,'');
+const sn1 = normalizeStr(`${s.surname}${s.name}`).replace(/\s+/g,'');
+const sn2 = normalizeStr(`${s.name}${s.surname}`).replace(/\s+/g,'');
 return hn.includes(sn1) || hn.includes(sn2) || sn1.includes(hn) || sn2.includes(hn);
 }).reverse();
 if (hist.length === 0) {
@@ -1172,11 +1207,15 @@ function createExportPackage(data, password = null) {
   return exportData;
 }
 
-// Validate and decrypt import package - COMPATIBLE CON CUALQUIER VERSIÓN
+// Validate and decrypt import package
 function validateImportPackage(imported, password = null) {
+  // Check version compatibility
+  if (!imported.version) {
+    return { valid: false, error: 'Archivo de exportación antiguo o inválido' };
+  }
+  
   let data;
-  let isOldFormat = false;
-
+  
   // Decrypt if necessary
   if (imported.encrypted) {
     if (!password) {
@@ -1187,80 +1226,34 @@ function validateImportPackage(imported, password = null) {
     } catch (err) {
       return { valid: false, error: err.message };
     }
-  } else if (imported.data) {
-    // Formato nuevo con versión
-    data = imported.data;
-  } else if (imported.students || importado.teachers) {
-    // Formato antiguo - datos directamente en el raíz
-    data = imported;
-    isOldFormat = true;
   } else {
-    return { valid: false, error: 'Archivo JSON inválido o no compatible' };
+    data = imported.data;
   }
-
-  // Validate checksum (only if available - old formats may not have it)
+  
+  // Validate checksum
   if (imported.checksum && generateChecksum(data) !== imported.checksum) {
     return { valid: false, error: 'El archivo está corrupto o ha sido modificado' };
   }
   
   // Sanitize all data
   const sanitizedData = sanitizeAppData(data);
-
+  
   // Validate structure
   const validation = validateImportData(sanitizedData);
   if (!validation.valid) {
     return validation;
   }
-
-  return { 
-    valid: true, 
-    data: sanitizedData, 
-    summary: validation.summary, 
-    metadata: imported.metadata || {},
-    isOldFormat: isOldFormat,
-    version: imported.version || 'antigua'
-  };
+  
+  return { valid: true, data: sanitizedData, summary: validation.summary, metadata: imported.metadata };
 }
 
 // ==================== EXPORT / IMPORT ====================
-// Enhanced Export - Includes ALL data with complete integrity verification
 function handleExport() {
   try {
-    // Collect ALL data including attendance records
-    const fullExport = {
-      version: '3.1.0',
-      exportDate: new Date().toISOString(),
-      platform: 'BEMBE-PC',
-      checksum: generateChecksum(appData),
-      data: {
-        students: appData.students || [],
-        teachers: appData.teachers || [],
-        renters: appData.renters || [],
-        debtRecords: appData.debtRecords || [],
-        history: appData.history || [],
-        schedule: appData.schedule || {},
-        prices: appData.prices || [],
-        // Include attendance data
-        attendance: collectAllAttendanceData()
-      },
-      metadata: {
-        recordCount: {
-          students: (appData.students || []).length,
-          teachers: (appData.teachers || []).length,
-          renters: (appData.renters || []).length,
-          debtRecords: (appData.debtRecords || []).length,
-          history: (appData.history || []).length,
-          schedule: Object.keys(appData.schedule || {}).length
-        },
-        dataIntegrity: {
-          hasAllFields: true,
-          checksumVerified: true,
-          compatibleWith: ['PC', 'Android', 'iOS']
-        }
-      }
-    };
-
-    const blob = new Blob([JSON.stringify(fullExport, null, 2)], {type:'application/json'});
+    // Create export package with metadata and checksum
+    const exportPackage = createExportPackage(appData);
+    
+    const blob = new Blob([JSON.stringify(exportPackage, null, 2)], {type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -1270,52 +1263,24 @@ function handleExport() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-
-    showToast('📥 Datos exportados correctamente con TODOS los registros y verificación de integridad');
-
+    
+    showToast('📥 Datos exportados correctamente con verificación de integridad');
+    
     // Auto-save backup to localStorage
     localStorage.setItem('bembe_last_export', JSON.stringify({
       timestamp: Date.now(),
-      checksum: fullExport.checksum,
-      dataSummary: fullExport.metadata.recordCount
+      checksum: exportPackage.checksum,
+      dataSummary: {
+        students: appData.students.length,
+        teachers: appData.teachers.length,
+        renters: appData.renters.length,
+        debtRecords: appData.debtRecords.length,
+        history: appData.history.length
+      }
     }));
   } catch(err) {
     console.error('Export error:', err);
     showToast('❌ Error al exportar: ' + err.message);
-  }
-}
-
-// Collect all attendance data from localStorage
-function collectAllAttendanceData() {
-  const attendance = {};
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key.startsWith('att_')) {
-        try {
-          attendance[key] = JSON.parse(localStorage.getItem(key) || '{}');
-        } catch(e) {
-          console.warn('Failed to parse attendance for key:', key);
-        }
-      }
-    }
-  } catch(e) {
-    console.error('Error collecting attendance:', e);
-  }
-  return attendance;
-}
-
-// Restore all attendance data from export
-function restoreAttendanceData(attendance) {
-  if (!attendance || typeof attendance !== 'object') return;
-  try {
-    Object.keys(attendance).forEach(key => {
-      if (key.startsWith('att_')) {
-        localStorage.setItem(key, JSON.stringify(attendance[key]));
-      }
-    });
-  } catch(e) {
-    console.error('Error restoring attendance:', e);
   }
 }
 function handleImport() {
@@ -1379,70 +1344,48 @@ function rotateOldBackups() {
 }
 
 function validateImportData(imported) {
-// Validate required fields exist - FLEXIBLE con formatos antiguos
+// Validate required fields exist
 const requiredFields = ['students', 'teachers', 'renters', 'debtRecords', 'history', 'schedule', 'prices'];
 const missingFields = requiredFields.filter(field => !(field in imported));
-
-// Si faltan campos, los agregamos con valores por defecto en lugar de rechazar
 if (missingFields.length > 0) {
-  console.log('Formato antiguo detectado, agregando campos faltantes:', missingFields);
-  missingFields.forEach(field => {
-    if (field === 'schedule') imported[field] = {};
-    else if (Array.isArray(imported.students)) imported[field] = [];
-    else imported[field] = [];
-  });
+return { valid: false, error: `Campos faltantes: ${missingFields.join(', ')}` };
 }
+// Validate data types
+if (!Array.isArray(imported.students)) return { valid: false, error: 'students debe ser un array' };
+if (!Array.isArray(imported.teachers)) return { valid: false, error: 'teachers debe ser un array' };
+if (!Array.isArray(imported.renters)) return { valid: false, error: 'renters debe ser un array' };
+if (!Array.isArray(imported.debtRecords)) return { valid: false, error: 'debtRecords debe ser un array' };
+if (!Array.isArray(imported.history)) return { valid: false, error: 'history debe ser un array' };
+if (typeof imported.schedule !== 'object') return { valid: false, error: 'schedule debe ser un objeto' };
+if (!Array.isArray(imported.prices)) return { valid: false, error: 'prices debe ser un array' };
 
-// Validate data types - convertir si es necesario
-if (!Array.isArray(imported.students)) {
-  imported.students = Array.isArray(imported.students) ? imported.students : [];
-}
-if (!Array.isArray(imported.teachers)) {
-  imported.teachers = Array.isArray(imported.teachers) ? imported.teachers : [];
-}
-if (!Array.isArray(imported.renters)) {
-  imported.renters = Array.isArray(imported.renters) ? imported.renters : [];
-}
-if (!Array.isArray(imported.debtRecords)) {
-  imported.debtRecords = Array.isArray(imported.debtRecords) ? imported.debtRecords : [];
-}
-if (!Array.isArray(imported.history)) {
-  imported.history = Array.isArray(imported.history) ? imported.history : [];
-}
-if (typeof imported.schedule !== 'object' || imported.schedule === null) {
-  imported.schedule = {};
-}
-if (!Array.isArray(imported.prices)) {
-  imported.prices = [];
-}
-
-// Validate and sanitize student structure - más tolerante
+// Validate and sanitize student structure
 for (let i = 0; i < imported.students.length; i++) {
-  const s = imported.students[i];
-  // Solo validar que tenga al menos un identificador
-  if (!s.id) {
-    s.id = 'student_' + i + '_' + Date.now();
-  }
-  if (!s.surname) s.surname = 'Sin apellido';
-  if (!s.name) s.name = 'Sin nombre';
-  
-  // Validate field lengths to prevent abuse
-  if (s.surname.length > 100) s.surname = s.surname.substring(0, 100);
-  if (s.name.length > 100) s.name = s.name.substring(0, 100);
-  if (s.phone && s.phone.length > 20) s.phone = s.phone.substring(0, 20);
+const s = imported.students[i];
+if (!s.id || !s.surname || !s.name) {
+return { valid: false, error: `Estudiante ${i+1} inválido: falta id, surname o name` };
+}
+// Validate field lengths to prevent abuse
+if (s.surname.length > 100 || s.name.length > 100) {
+  return { valid: false, error: `Estudiante ${i+1}: nombre o apellido demasiado largo (máx 100 caracteres)` };
+}
+if (s.phone && s.phone.length > 20) {
+  return { valid: false, error: `Estudiante ${i+1}: número de teléfono demasiado largo` };
+}
 }
 
-// Validate teachers - más tolerante
+// Validate teachers
 for (let i = 0; i < imported.teachers.length; i++) {
   const t = imported.teachers[i];
-  if (!t.id) t.id = 'teacher_' + i + '_' + Date.now();
-  if (t.name && t.name.length > 100) t.name = t.name.substring(0, 100);
+  if (t.name && t.name.length > 100) {
+    return { valid: false, error: `Profesor ${i+1}: nombre demasiado largo` };
+  }
 }
 
 // Check file size estimate
 const estimatedSize = JSON.stringify(imported).length;
-if (estimatedSize > 10 * 1024 * 1024) { // 10MB limit
-return { valid: false, error: 'Archivo demasiado grande (>10MB)' };
+if (estimatedSize > 5 * 1024 * 1024) { // 5MB limit
+return { valid: false, error: 'Archivo demasiado grande (>5MB)' };
 }
 return { valid: true, summary: {
 students: imported.students.length,
@@ -1649,14 +1592,8 @@ confirmPromise.then(() => {
 // User confirmed - apply import with sanitized data
 appData = validation.data;
 saveData();
-
-// Restore attendance data if available
-if (validation.data && validation.data.attendance) {
-  restoreAttendanceData(validation.data.attendance);
-}
-
 renderAll();
-showToast('✅ Datos importados correctamente con TODOS los registros verificados');
+showToast('✅ Datos importados correctamente con verificación de integridad');
 
 // Save import history with metadata
 const importHistory = JSON.parse(localStorage.getItem('bembe_import_history') || '[]');
@@ -1665,9 +1602,7 @@ date: Date.now(),
 file: file.name,
 summary: validation.summary,
 checksum: validation.data ? generateChecksum(validation.data) : 'N/A',
-metadata: validation.metadata || {},
-platform: 'PC',
-version: validation.data?.version || '3.1.0'
+metadata: validation.metadata || {}
 });
 if (importHistory.length > 10) importHistory.pop();
 localStorage.setItem('bembe_import_history', JSON.stringify(importHistory));
@@ -2014,8 +1949,6 @@ function openModal(type) {
         {day:'Miércoles',classes:['20:00 - 21:00 ➤ Salsa','21:00 - 22:00 ➤ Salsa']},
         {day:'Jueves',classes:['20:00 - 21:00 ➤ Cursos','21:00 - 22:00 ➤ Cursos']},
         {day:'Viernes',classes:['20:00 - 21:00 ➤ Cursos','21:00 - 22:00 ➤ Cursos']},
-        {day:'Sábado',classes:['10:00 - 11:00 ➤ Práctica Libre','11:00 - 12:00 ➤ Práctica Libre']},
-        {day:'Domingo',classes:['18:00 - 20:00 ➤ Clase Especial']},
       ];
       let bembeRows = bembeSchedule.map(r => `
         <div style="display:flex;margin-bottom:8px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,0.05);">
@@ -2124,7 +2057,7 @@ const val = surnameInput.value.trim();
 // Try to find matching student
 const s = appData.students.find(st => {
 const full = `${st.surname} ${st.name}`;
-return full === val || st.surname.toLowerCase() === val.toLowerCase();
+return full === val || normalizeStr(st.surname) === normalizeStr(val);
 });
 if (s) {
 const nameInput = document.getElementById('sfName');
@@ -2236,7 +2169,7 @@ function translateAll() {
 
 const translations = {
   es: {
-    title: "✦ Escuela Bembe 2026 ✦",
+    title: "✦ Sistema Bembe ✦",
     subtitle: "Gestión de Escuela de Danza",
     calendar: "📅 Calendario",
     teachers: "🎓 Profesores",
@@ -2394,7 +2327,7 @@ const translations = {
     perMonth: "mes"
   },
   ru: {
-    title: "✦ Escuela Bembe 2026 ✦",
+    title: "✦ Система Bembe ✦",
     subtitle: "Управление танцевальной школой",
     calendar: "📅 Календарь",
     teachers: "🎓 Преподаватели",
@@ -2552,7 +2485,7 @@ const translations = {
     perMonth: "мес"
   },
   en: {
-    title: "✦ Escuela Bembe 2026 ✦",
+    title: "✦ Bembe System ✦",
     subtitle: "Dance School Management",
     calendar: "📅 Calendar",
     teachers: "🎓 Teachers",
@@ -2733,7 +2666,7 @@ function changeLanguage(lang) {
 // ==================== INIT ====================
 function initApp() {
   loadData();
-
+  
   // Load saved language preference
   try {
     const savedLang = localStorage.getItem('bembe_language');
@@ -2741,274 +2674,11 @@ function initApp() {
       currentLanguage = savedLang;
     }
   } catch(e) { console.error('Error loading language:', e); }
-
+  
   renderAll();
   updateGridLayout();
   window.addEventListener('resize', updateGridLayout);
-
-  // Online/Offline detection
-  window.addEventListener('online', () => {
-    isOnline = true;
-    checkForUpdates();
-    if (authToken && syncEnabled) syncWithServer();
-  });
-  window.addEventListener('offline', () => {
-    isOnline = false;
-    updateSyncStatus('offline');
-  });
-
-  // Check for updates on startup
-  setTimeout(() => checkForUpdates(), 2000);
 }
-
-// ==================== JSON UPDATE SYSTEM ====================
-const APP_VERSION = '3.1.4';
-const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Vladimir2984/-BASE-DE-DATOS-BEMBE/master';
-const UPDATE_JSON_URL = `${GITHUB_RAW_URL}/update.json`;
-
-async function checkForUpdates() {
-  if (!isOnline) return;
-
-  try {
-    // Check once per hour
-    const lastCheck = localStorage.getItem('bembe_last_update_check');
-    if (lastCheck && (Date.now() - parseInt(lastCheck)) < 3600000) return;
-    localStorage.setItem('bembe_last_update_check', Date.now().toString());
-
-    // Fetch update.json from GitHub
-    const response = await fetch(UPDATE_JSON_URL);
-    if (!response.ok) {
-      console.log('[Update] Failed to fetch update.json');
-      return;
-    }
-
-    const updateData = await response.json();
-    const remoteVersion = updateData.version;
-
-    // Compare versions
-    if (compareVersions(remoteVersion, APP_VERSION) > 0) {
-      showUpdateNotification(updateData);
-    }
-  } catch (error) {
-    console.log('[Update] Check skipped:', error);
-  }
-}
-
-function compareVersions(remote, local) {
-  const r = remote.split('.').map(Number);
-  const l = local.split('.').map(Number);
-  for (let i = 0; i < 3; i++) {
-    if (r[i] > l[i]) return 1;
-    if (r[i] < l[i]) return -1;
-  }
-  return 0;
-}
-
-function showUpdateNotification(updateData) {
-  const toast = document.createElement('div');
-  toast.className = 'toast success';
-  toast.style.cssText = 'bottom:80px;right:24px;cursor:pointer;max-width:320px;';
-  
-  const changes = updateData.changelog ? updateData.changelog.slice(0, 3).join('<br>') : '';
-  toast.innerHTML = `🔄 <strong>v${updateData.version} disponible</strong><br><small>${updateData.description || ''}</small>${changes ? '<br><small style="opacity:0.7;">' + changes + '</small>' : ''}`;
-
-  toast.onclick = async () => {
-    showToast('⬇️ Descargando actualización...');
-    await downloadAndApplyUpdate(updateData);
-  };
-
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 15000);
-}
-
-async function downloadAndApplyUpdate(updateData) {
-  try {
-    const fileInfo = updateData.files['CODIGO OK.html'];
-    if (!fileInfo) throw new Error('No file info available');
-
-    // Download new version
-    const response = await fetch(fileInfo.url);
-    if (!response.ok) throw new Error('Download failed');
-    
-    const newCode = await response.text();
-
-    // Verify integrity
-    if (!newCode.includes('BEMBE') || !newCode.includes('appData')) {
-      throw new Error('Invalid file content');
-    }
-
-    // Save backup of current version
-    try {
-      const currentCode = document.documentElement.outerHTML;
-      localStorage.setItem('bembe_previous_version', currentCode);
-    } catch(e) { console.warn('Backup failed:', e); }
-
-    // Open new version
-    const newWin = window.open('', '_blank');
-    if (newWin) {
-      newWin.document.open();
-      newWin.document.write(newCode);
-      newWin.document.close();
-      localStorage.setItem('bembe_local_date', Date.now().toString());
-      showToast('✅ ¡Aplicación actualizada a v' + updateData.version + '!');
-    } else {
-      throw new Error('Pop-up blocked');
-    }
-  } catch (error) {
-    console.error('Update error:', error);
-    showToast('❌ Error al actualizar: ' + error.message);
-  }
-}
-
-async function forceUpdate() {
-  showToast('⬇️ Verificando actualizaciones...');
-  try {
-    const response = await fetch(UPDATE_JSON_URL);
-    if (!response.ok) throw new Error('No se pudo conectar con GitHub');
-    
-    const updateData = await response.json();
-    await downloadAndApplyUpdate(updateData);
-  } catch (error) {
-    showToast('❌ Error al actualizar: ' + error.message);
-  }
-}
-
-// ==================== SERVER SYNC (ADDED v3.0) ====================
-const SERVER_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
-let authToken = localStorage.getItem('bembe_auth_token') || null;
-let currentUser = JSON.parse(localStorage.getItem('bembe_user') || 'null');
-let isOnline = navigator.onLine;
-let lastSyncTime = localStorage.getItem('bembe_last_sync') || null;
-let autoSyncInterval = null;
-let syncEnabled = false;
-
-function updateSyncStatus(status) {
-  const indicator = document.getElementById('syncIndicator');
-  if (!indicator) return;
-  const colors = { connected: '#10b981', syncing: '#3b82f6', error: '#f43f5e', offline: '#6b7280' };
-  const labels = { connected: '☁️ Conectado', syncing: '🔄 Sincronizando...', error: '❌ Error Sync', offline: '💾 Modo Local' };
-  indicator.style.color = colors[status] || colors.offline;
-  indicator.textContent = labels[status] || labels.offline;
-}
-
-async function syncWithServer() {
-  if (!authToken || !isOnline || !syncEnabled) { updateSyncStatus('offline'); return false; }
-  try {
-    updateSyncStatus('syncing');
-    const response = await fetch(`${SERVER_URL}/api/sync`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`, 'X-Client-Type': 'web' },
-      body: JSON.stringify({ localData: appData, lastSync: lastSyncTime, clientInfo: { type: 'web', version: '3.0.0' } })
-    });
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) { showToast('⚠️ Sesión expirada'); handleLogout(); return false; }
-      throw new Error('Error sync');
-    }
-    const result = await response.json();
-    if (result.serverData && Object.keys(result.serverData).length > 0) {
-      Object.assign(appData, result.serverData);
-      saveData();
-      renderAll();
-    }
-    lastSyncTime = result.timestamp;
-    localStorage.setItem('bembe_last_sync', lastSyncTime);
-    updateSyncStatus('connected');
-    return true;
-  } catch (error) {
-    console.error('Sync error:', error);
-    updateSyncStatus('error');
-    return false;
-  }
-}
-
-async function handleCloudLogin() {
-  const email = prompt('📧 Email:');
-  if (!email) return;
-  const password = prompt('🔒 Contraseña:');
-  if (!password) return;
-  try {
-    const response = await fetch(`${SERVER_URL}/api/auth/login`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, clientId: 'web' })
-    });
-    const result = await response.json();
-    if (response.ok) {
-      authToken = result.token;
-      currentUser = result.user;
-      localStorage.setItem('bembe_auth_token', authToken);
-      localStorage.setItem('bembe_user', JSON.stringify(currentUser));
-      syncEnabled = true;
-      showToast('✅ Sesión iniciada - Sync activado');
-      syncWithServer();
-      startAutoSync();
-    } else { showToast('❌ ' + result.error); }
-  } catch (error) { showToast('❌ Error de conexión'); }
-}
-
-async function handleCloudRegister() {
-  const email = prompt('📧 Email:');
-  if (!email) return;
-  const password = prompt('🔒 Contraseña (mínimo 8 caracteres):');
-  if (!password || password.length < 8) { showToast('⚠️ Mínimo 8 caracteres'); return; }
-  const name = prompt('👤 Nombre (opcional):') || email.split('@')[0];
-  try {
-    const response = await fetch(`${SERVER_URL}/api/auth/register`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name, clientId: 'web' })
-    });
-    const result = await response.json();
-    if (response.ok) {
-      authToken = result.token;
-      currentUser = result.user;
-      localStorage.setItem('bembe_auth_token', authToken);
-      localStorage.setItem('bembe_user', JSON.stringify(currentUser));
-      syncEnabled = true;
-      showToast('✅ Cuenta creada - Sync activado');
-      syncWithServer();
-      startAutoSync();
-    } else { showToast('❌ ' + result.error); }
-  } catch (error) { showToast('❌ Error de conexión'); }
-}
-
-function handleLogout() {
-  authToken = null;
-  currentUser = null;
-  syncEnabled = false;
-  localStorage.removeItem('bembe_auth_token');
-  localStorage.removeItem('bembe_user');
-  if (autoSyncInterval) clearInterval(autoSyncInterval);
-  updateSyncStatus('offline');
-  showToast('✅ Sesión cerrada - Modo local');
-}
-
-function startAutoSync() {
-  if (autoSyncInterval) clearInterval(autoSyncInterval);
-  autoSyncInterval = setInterval(() => {
-    if (authToken && isOnline && syncEnabled) { syncWithServer(); }
-  }, 5 * 60 * 1000);
-}
-
-async function handleSyncManual() {
-  if (!authToken || !syncEnabled) {
-    const choice = confirm('⚠️ Necesitas cuenta en la nube para sincronizar.\n\n¿Crear cuenta ahora?');
-    if (choice) handleCloudRegister();
-    return;
-  }
-  await syncWithServer();
-}
-
-// Override saveData to include cloud sync
-const originalSaveData = saveData;
-saveData = function() {
-  try {
-    localStorage.setItem('bembe_app_data', JSON.stringify(appData));
-  } catch(e) {
-    console.error('Error saving data:', e);
-    showToast("⚠️ Error al guardar datos. Espacio insuficiente");
-    handleExport();
-  }
-};
-
 // Start
 document.addEventListener('DOMContentLoaded', () => {
 initStarryBg();

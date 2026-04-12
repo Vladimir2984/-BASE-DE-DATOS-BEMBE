@@ -75,9 +75,9 @@ public class MainActivity extends AppCompatActivity {
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
         
-        // RESTRINGIR acceso a archivos universales por seguridad
-        settings.setAllowFileAccessFromFileURLs(false);
-        settings.setAllowUniversalAccessFromFileURLs(false);
+        // PERMITIR acceso a archivos universales para que el sistema OTA remoto por JS funcione y pueda comunicarse con APIs externas
+        settings.setAllowFileAccessFromFileURLs(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
 
         // Configurar almacenamiento local
         settings.setDomStorageEnabled(true);
