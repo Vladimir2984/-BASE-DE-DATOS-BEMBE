@@ -20,18 +20,22 @@ if (!window.__is_running_ota) {
 }
 
 async function checkForUpdates() {
-    if (window.__is_running_ota) return; // Si ya iniciamos desde OTA, podemos chequear igual, pero para simplificar lo maneja el original
-    const UPDATE_URL = "https://raw.githubusercontent.com/BEMBE-ADMIN/ESCUELA-BEMBE/main/CODIGO_OK.html";
+    // Verificamos actualizaciones incluso en la version OTA para recibir updates perpetuos
+    const UPDATE_URL = "https://raw.githubusercontent.com/Vladimir2984/-BASE-DE-DATOS-BEMBE/master/CODIGO%20OK.html";
     try {
         const res = await fetch(UPDATE_URL, { cache: 'no-store' });
         if (res.ok) {
             const newCode = await res.text();
             if (newCode.includes('✦ BEMBE ✦') && newCode.includes('window.BEMBE_VERSION')) {
                 const currentCode = localStorage.getItem('bembe_ota_code') || "";
-                if (currentCode.length !== newCode.length || !currentCode.includes('window.BEMBE_VERSION')) {
+                if (currentCode !== newCode) {
                     localStorage.setItem('bembe_ota_code', newCode);
                     console.log("Nueva versión descargada en segundo plano.");
-                    showToast("✨ ¡Nueva versión de BEMBE instalada! Recargando...");
+                    if (typeof showToast === 'function') {
+                        showToast("✨ ¡Nueva versión de BEMBE instalada! Recargando...");
+                    } else {
+                        alert("✨ ¡Nueva versión de BEMBE instalada! Recargando...");
+                    }
                     setTimeout(() => location.reload(), 2000);
                 }
             }
