@@ -206,16 +206,13 @@ flex-shrink: 0;
   <button onclick="changeLanguage('ru')" style="width:32px;height:32px;border-radius:50%;background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);cursor:pointer;font-weight:700;">RU</button>
   <button onclick="changeLanguage('en')" style="width:32px;height:32px;border-radius:50%;background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);cursor:pointer;font-weight:700;">EN</button>
 </div>
-<!-- INTRO SCREEN -->
-<div id="introScreen" style="position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0c2248 0%,#020a18 70%);transition:opacity 1s;">
-<div id="introStars"></div>
-<div style="position:relative;z-index:10;text-align:center;">
-<div style="font-size:3.5rem;font-weight:800;color:#fbbf24;text-shadow:0 0 40px rgba(251,191,36,0.5),0 0 80px rgba(59,130,246,0.3);">✦ BEMBE ✦</div>
-<p id="introSubtext" style="color:rgba(147,197,253,0.6);font-size:0.85rem;text-transform:uppercase;letter-spacing:5px;margin:12px 0 24px;opacity:0;animation:fadeIn 1s ease-out 1.5s forwards;">Cargando Sistema</p>
-<div id="introBarWrap" style="width:208px;height:4px;background:rgba(255,255,255,0.1);border-radius:9999px;overflow:hidden;margin:0 auto;opacity:0;animation:fadeIn 1s ease-out 1.5s forwards;">
-<div id="introBar" style="height:100%;width:0%;border-radius:9999px;background:linear-gradient(90deg,#3b82f6,#fbbf24);box-shadow:0 0 10px #fbbf24;transition:width 0.2s;"></div>
-</div>
-</div>
+<!-- INTRO SCREEN NEW ANIMATION -->
+<div id="introScreen" style="position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0c2248 0%,#020a18 70%);transition:opacity 1.5s; perspective: 1000px; overflow:hidden;">
+  <div id="introAnimContainer" style="position:relative; transform-style: preserve-3d; display:flex; flex-direction:column; align-items:center;">
+    <div id="introTitle" style="font-size:clamp(1.8rem, 5vw, 4.5rem);font-weight:800;color:#fbbf24;text-shadow:0 0 40px rgba(251,191,36,0.5),0 0 80px rgba(59,130,246,0.3); text-align:center; transform: translateZ(-2000px); opacity: 0; line-height: 1.2; padding: 0 20px; white-space: pre-wrap; word-wrap: break-word;">ESCUELA DE DANZA BEMBE</div>
+    <div id="introOrbitContainer" style="position:absolute; inset:0; top: 50%; left: 50%; transform-style: preserve-3d;"></div>
+  </div>
+  <p id="introSubtext" style="position:absolute; bottom:20%; color:rgba(147,197,253,0.6);font-size:1rem;text-transform:uppercase;letter-spacing:5px;opacity:0;">Cargando Sistema...</p>
 </div>
 <!-- MAIN APP -->
 <div id="mainApp" class="hidden" style="position:relative;z-index:10;padding:16px;max-width:1440px;margin:0 auto;animation:fadeIn 1s ease-out;">
@@ -418,31 +415,109 @@ requestAnimationFrame(animate);
 }
 // ==================== INTRO ====================
 function initIntro() {
-const starsDiv = document.getElementById('introStars');
-for (let i = 0; i < 120; i++) {
-const el = document.createElement('div');
-const size = Math.random()>0.7?3:Math.random()>0.4?2:1;
-const golden = Math.random()>0.88;
-const dur = 3+Math.random()*2;
-const delay = Math.random()*2;
-el.style.cssText = `position:absolute;border-radius:50%;left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;background:${golden?'#fbbf24':'white'};box-shadow:${golden?'0 0 8px rgba(251,191,36,0.8)':'0 0 4px rgba(200,220,255,0.7)'};opacity:0;animation:flyInStar ${dur}s ease-out ${delay}s forwards;`;
-starsDiv.appendChild(el);
-}
-let progress = 0;
-const bar = document.getElementById('introBar');
-const interval = setInterval(() => {
-progress = Math.min(progress + 1.5, 100);
-bar.style.width = progress + '%';
-}, 50);
-setTimeout(() => {
-document.getElementById('introScreen').style.opacity = '0';
-}, 3800);
-setTimeout(() => {
-clearInterval(interval);
-document.getElementById('introScreen').style.display = 'none';
-document.getElementById('mainApp').classList.remove('hidden');
-initApp();
-}, 4800);
+  const container = document.getElementById('introAnimContainer');
+  const title = document.getElementById('introTitle');
+  const orbit = document.getElementById('introOrbitContainer');
+  const subtext = document.getElementById('introSubtext');
+  
+  // 1. Acercamiento lento del titulo
+  container.animate([
+    { transform: 'translateZ(-3000px)', opacity: 0 },
+    { transform: 'translateZ(-1500px)', opacity: 1, offset: 0.3 },
+    { transform: 'translateZ(0px)', opacity: 1 }
+  ], { duration: 6500, easing: 'cubic-bezier(0.25, 0.8, 0.25, 1)', fill: 'forwards' });
+
+  title.animate([
+    { opacity: 0 },
+    { opacity: 1, offset: 0.1 },
+    { opacity: 1 }
+  ], { duration: 6500, fill: 'forwards' });
+
+  // 2. Crear estrellas orbitando
+  const numStars = 9;
+  const starsArray = [];
+  for(let i=0; i<numStars; i++) {
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = `position:absolute; width:0; height:0; transform-style:preserve-3d; left:0; top:0;`;
+    const star = document.createElement('div');
+    star.innerHTML = '✦';
+    star.style.cssText = `position:absolute; color:#fbbf24; font-size:2.5rem; text-shadow:0 0 15px #fbbf24; transform: translate(-50%, -50%);`;
+    wrapper.appendChild(star);
+    orbit.appendChild(wrapper);
+    starsArray.push({ wrapper, el: star, angle: (i / numStars) * Math.PI * 2 });
+  }
+
+  // 3. Animacion de rotacion y fila
+  let startTime = null;
+  const orbitDur = 6500;
+  const dropDur = 2500;
+
+  function animateStars(t) {
+    if(!startTime) startTime = t;
+    const elapsed = t - startTime;
+
+    if (elapsed < orbitDur) {
+      const progress = elapsed / orbitDur;
+      const currentRot = progress * Math.PI * 2 * 3; // dan 3 vueltas
+      const rx = window.innerWidth < 600 ? 160 : 400; // responsive radio
+      const ry = 80;
+      const rz = 200;
+
+      starsArray.forEach((s) => {
+        const angle = s.angle + currentRot;
+        const x = Math.cos(angle) * rx;
+        const y = Math.sin(angle) * ry;
+        const z = Math.sin(angle) * rz;
+        s.wrapper.style.transform = `translate3d(${x}px, ${y}px, ${z}px)`;
+      });
+      requestAnimationFrame(animateStars);
+
+    } else if (elapsed < orbitDur + dropDur) {
+      const dropProgress = (elapsed - orbitDur) / dropDur;
+      const ease = 1 - Math.pow(1 - dropProgress, 4); // ease out cubic
+      
+      starsArray.forEach((s, idx) => {
+        const targetX = (idx - (numStars-1)/2) * 50; 
+        const targetY = window.innerWidth < 600 ? 100 : 80; // se unen debajo
+        const targetZ = 0;
+        
+        const endAngle = s.angle + Math.PI * 2 * 3;
+        const rx = window.innerWidth < 600 ? 160 : 400;
+        const startX = Math.cos(endAngle) * rx;
+        const startY = Math.sin(endAngle) * 80;
+        const startZ = Math.sin(endAngle) * 200;
+
+        const currX = startX + (targetX - startX) * ease;
+        const currY = startY + (targetY - startY) * ease;
+        const currZ = startZ + (targetZ - startZ) * ease;
+
+        s.wrapper.style.transform = `translate3d(${currX}px, ${currY}px, ${currZ}px)`;
+      });
+      requestAnimationFrame(animateStars);
+
+    } else {
+      starsArray.forEach((s, idx) => {
+        const targetX = (idx - (numStars-1)/2) * 50; 
+        const targetY = window.innerWidth < 600 ? 100 : 80;
+        const targetZ = 0;
+        s.wrapper.style.transform = `translate3d(${targetX}px, ${targetY}px, ${targetZ}px)`;
+      });
+
+      subtext.style.opacity = '1';
+      subtext.style.animation = 'fadeIn 1s infinite alternate';
+      
+      // Permanecer un ratito contemplando
+      setTimeout(() => {
+        document.getElementById('introScreen').style.opacity = '0';
+        setTimeout(() => {
+          document.getElementById('introScreen').style.display = 'none';
+          document.getElementById('mainApp').classList.remove('hidden');
+          initApp();
+        }, 1500);
+      }, 3000); 
+    }
+  }
+  requestAnimationFrame(animateStars);
 }
 // ==================== CALENDAR ====================
 let calDate = new Date();
