@@ -778,7 +778,7 @@ renderScheduleGrid();
 function renderScheduleGrid() {
 const container = document.getElementById('scheduleGridContainer');
 if (!container) return;
-const days = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const days = [t('monday'),t('tuesday'),t('wednesday'),t('thursday'),t('friday'),t('saturday'),t('sunday')];
 let html = `
 <div style="display:flex;justify-content:center;gap:16px;margin-bottom:16px;">
 <button onclick="setScheduleRoom('grande')" class="btn-modern" style="width:auto;padding:10px 20px;${schedRoom==='grande'?'background:#3b82f6;color:white;box-shadow:0 4px 15px rgba(59,130,246,0.3);transform:scale(1.05);':'background:rgba(255,255,255,0.05);color:rgba(147,197,253,0.5);'}">🚪 Salón Grande</button>
@@ -810,7 +810,7 @@ html += '</div></div>';
 container.innerHTML = html;
 }
 function openEditCell(dayIdx, time, key) {
-const daysArr = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const daysArr = [t('monday'),t('tuesday'),t('wednesday'),t('thursday'),t('friday'),t('saturday'),t('sunday')];
 editCellKey = key;
 const saved = appData.schedule[key];
 const roomName = schedRoom === 'grande' ? 'Salón Grande' : 'Salón Pequeño';
@@ -1953,13 +1953,13 @@ function openModal(type) {
       break;
     case 'bembe':
       const bembeSchedule = [
-        {day:'Lunes',classes:['20:00 - 21:00 ➤ Porasino','21:00 - 22:00 ➤ Porasino']},
-        {day:'Martes',classes:['20:00 - 21:00 ➤ Afro','21:00 - 22:00 ➤ Afro']},
-        {day:'Miércoles',classes:['20:00 - 21:00 ➤ Salsa','21:00 - 22:00 ➤ Salsa']},
-        {day:'Jueves',classes:['20:00 - 21:00 ➤ Cursos','21:00 - 22:00 ➤ Cursos']},
-        {day:'Viernes',classes:['20:00 - 21:00 ➤ Cursos','21:00 - 22:00 ➤ Cursos']},
-        {day:'Sábado',classes:['10:00 - 11:00 ➤ Práctica Libre','11:00 - 12:00 ➤ Práctica Libre']},
-        {day:'Domingo',classes:['18:00 - 20:00 ➤ Clase Especial']},
+        {day:t('monday'),classes:['20:00 - 21:00 ➤ Porasino','21:00 - 22:00 ➤ Porasino']},
+        {day:t('tuesday'),classes:['20:00 - 21:00 ➤ Afro','21:00 - 22:00 ➤ Afro']},
+        {day:t('wednesday'),classes:['20:00 - 21:00 ➤ Salsa','21:00 - 22:00 ➤ Salsa']},
+        {day:t('thursday'),classes:['20:00 - 21:00 ➤ Cursos','21:00 - 22:00 ➤ Cursos']},
+        {day:t('friday'),classes:['20:00 - 21:00 ➤ Cursos','21:00 - 22:00 ➤ Cursos']},
+        {day:t('saturday'),classes:['10:00 - 11:00 ➤ Práctica Libre','11:00 - 12:00 ➤ Práctica Libre']},
+        {day:t('sunday'),classes:['18:00 - 20:00 ➤ Clase Especial']},
       ];
       let bembeRows = bembeSchedule.map(r => `
         <div style="display:flex;margin-bottom:8px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,0.05);">
@@ -2335,7 +2335,14 @@ const translations = {
     totalDebt: "Deuda Total",
     paid: "Pagado",
     pending: "Pendiente",
-    perMonth: "mes"
+    perMonth: "mes",
+    monday: "Lunes",
+    tuesday: "Martes",
+    wednesday: "Miércoles",
+    thursday: "Jueves",
+    friday: "Viernes",
+    saturday: "Sábado",
+    sunday: "Domingo"
   },
   ru: {
     title: "✦ Escuela Bembe 2026 ✦",
@@ -2493,7 +2500,14 @@ const translations = {
     totalDebt: "Общий долг",
     paid: "Оплачено",
     pending: "Остаток",
-    perMonth: "мес"
+    perMonth: "мес",
+    monday: "Понедельник",
+    tuesday: "Вторник",
+    wednesday: "Среда",
+    thursday: "Четверг",
+    friday: "Пятница",
+    saturday: "Суббота",
+    sunday: "Воскресенье"
   },
   en: {
     title: "✦ Escuela Bembe 2026 ✦",
@@ -2651,7 +2665,14 @@ const translations = {
     totalDebt: "Total Debt",
     paid: "Paid",
     pending: "Pending",
-    perMonth: "month"
+    perMonth: "month",
+    monday: "Monday",
+    tuesday: "Tuesday",
+    wednesday: "Wednesday",
+    thursday: "Thursday",
+    friday: "Friday",
+    saturday: "Saturday",
+    sunday: "Sunday"
   }
 };
 
